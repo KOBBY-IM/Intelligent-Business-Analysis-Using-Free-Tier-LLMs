@@ -1,0 +1,21 @@
+# Environment and secrets
+.env
+.venv/
+
+# Data and results
+/data/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Jupyter and notebook checkpoints
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VSCode and editor settings
+.vscode/
+.cursor/ 

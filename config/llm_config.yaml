@@ -1,0 +1,13 @@
+providers:
+  groq:
+    enabled: true
+    model_name: "mixtral-8x7b"
+    api_key_env: "GROQ_API_KEY"
+  gemini:
+    enabled: true
+    model_name: "gemini-pro"
+    api_key_env: "GOOGLE_API_KEY"
+  huggingface:
+    enabled: true
+    model_name: "distilbert-base-uncased"
+    api_key_env: "HUGGINGFACE_API_KEY" 

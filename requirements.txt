@@ -1,0 +1,14 @@
+langchain
+faiss-cpu
+chromadb
+streamlit
+pandas
+torch
+transformers
+sentence-transformers
+structlog
+pydantic
+python-dotenv
+plotly
+requests
+httpx 

@@ -1,0 +1,14 @@
+[tool.black]
+line-length = 88
+
+[tool.ruff]
+line-length = 88
+
+[tool.pytest.ini_options]
+addopts = "--cov=src --cov-report=term-missing"
+
+[project]
+name = "intelligent-business-analysis-llms"
+version = "0.1.0"
+description = "RAG-enabled evaluation system for free-tier LLMs across industries"
+requires-python = ">=3.9" 

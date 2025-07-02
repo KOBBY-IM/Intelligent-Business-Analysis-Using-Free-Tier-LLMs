@@ -1,0 +1,14 @@
+metrics:
+  relevance:
+    type: float
+    threshold: 0.7
+  factual_accuracy:
+    type: float
+    threshold: 0.8
+  coherence:
+    type: float
+    threshold: 0.7
+  token_count:
+    type: int
+  latency:
+    type: float 
