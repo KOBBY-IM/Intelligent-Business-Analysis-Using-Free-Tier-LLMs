@@ -85,22 +85,13 @@ project_root/
 └── tests/                # Test suite
 ```
 
-## Next Steps (Week 1 - MVP 1)
-1. **Secure LLM Evaluation Engine**
-   - Implement BaseLLMProvider abstract class
-   - Build RAG pipeline (retriever.py, generator.py)
-   - Create evaluation metrics (scorer.py)
-   - Add CLI interface for batch evaluation
-
-2. **Week 2 - Streamlit Dashboard**
-   - Interactive UI with Microsoft Fluent UI styling
-   - Blind user testing interface
-   - User preference logging
-
-3. **Week 3 - Statistical Analysis**
-   - Full-scale evaluation across all models
-   - Statistical analysis and reporting
-   - Export functionality
+## Features
+- **Multi-LLM Support**: Groq, Gemini, and Hugging Face integration
+- **RAG Pipeline**: Document retrieval and generation capabilities
+- **Streamlit UI**: Interactive dashboard for LLM comparison
+- **Statistical Analysis**: Comprehensive evaluation metrics
+- **Security-First**: Environment-based configuration and input validation
+- **Research-Grade**: Reproducible methodology with exportable results
 
 ## Configuration
 All settings are externalized to YAML files:
