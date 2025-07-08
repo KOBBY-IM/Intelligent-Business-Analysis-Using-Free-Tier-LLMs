@@ -7,13 +7,8 @@ This module provides the core RAG pipeline components including:
 - Complete RAG pipeline
 """
 
-from .vector_store import FAISSVectorStore, DocumentChunk
-from .retrieval import DocumentRetriever
 from .pipeline import RAGPipeline
+from .retrieval import DocumentRetriever
+from .vector_store import DocumentChunk, FAISSVectorStore
 
-__all__ = [
-    'FAISSVectorStore',
-    'DocumentChunk',
-    'DocumentRetriever',
-    'RAGPipeline'
-] 
+__all__ = ["FAISSVectorStore", "DocumentChunk", "DocumentRetriever", "RAGPipeline"]

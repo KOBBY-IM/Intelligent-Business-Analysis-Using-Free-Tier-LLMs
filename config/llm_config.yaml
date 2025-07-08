@@ -6,8 +6,6 @@ providers:
         description: "Original Llama 3 8B model"
       - name: "llama-3.1-8b-instant"
         description: "New Llama 3.1 8B Instant model"
-      - name: "qwen-qwq-32b"
-        description: "New Qwen QWQ 32B model"
     api_key_env: "GROQ_API_KEY"
   gemini:
     enabled: true
@@ -22,8 +20,4 @@ providers:
     models:
       - name: "mistralai/mistral-7b-instruct"
         description: "Original Mistral 7B Instruct model"
-      - name: "deepseek/deepseek-r1-0528-qwen3-8b:free"
-        description: "DeepSeek R1 0528 Qwen3 8B Free model"
-      - name: "openrouter/cypher-alpha:free"
-        description: "OpenRouter Cypher Alpha Free model"
     api_key_env: "OPENROUTER_API_KEY" 

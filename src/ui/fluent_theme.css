@@ -1,0 +1,43 @@
+body, .stApp {
+    background-color: #f3f3f3 !important;
+    font-family: 'Segoe UI', 'Roboto', Arial, sans-serif !important;
+}
+
+/* Card-like containers */
+.stContainer, .stTabs, .stSidebar, .stButton, .stTextInput, .stSelectbox, .stRadio, .stDataFrame, .stMarkdown, .stHeader, .stSubheader {
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07), 0 1.5px 4px rgba(0,0,0,0.03) !important;
+    background: #fff !important;
+}
+
+.stHeader, .stSubheader {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.stButton>button, .stTextInput>div>input, .stSelectbox>div>div, .stRadio>div>div {
+    border-radius: 8px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+    font-family: 'Segoe UI', 'Roboto', Arial, sans-serif !important;
+}
+
+.stSidebar {
+    background: #f8f8f8 !important;
+    border-radius: 0 16px 16px 0 !important;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.04) !important;
+}
+
+/* Remove Streamlit default shadows where not needed */
+.stApp>header, .stApp>footer {
+    box-shadow: none !important;
+}
+
+/* Responsive tweaks */
+@media (max-width: 600px) {
+    .stHeader, .stSubheader {
+        font-size: 1.2rem !important;
+    }
+    .stContainer, .stTabs, .stSidebar {
+        border-radius: 8px !important;
+    }
+} 

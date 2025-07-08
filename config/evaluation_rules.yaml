@@ -1,0 +1,15 @@
+relevance:
+  keywords:
+    retail: ["sales", "customer", "inventory", "store"]
+    finance: ["risk", "investment", "compliance", "market"]
+    healthcare: ["patient", "compliance", "care", "HIPAA"]
+  min_score: 0.2
+length_coherence:
+  min_tokens: 10
+  max_tokens: 200
+  penalty_short: 0.5
+  penalty_long: 0.5
+factual_accuracy:
+  enabled: true
+  match_threshold: 0.7
+  method: "substring"  # or "exact", "fuzzy" 

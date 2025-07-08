@@ -76,6 +76,12 @@ coverage.xml
 docs/_build/
 site/
 
+# Documentation and evaluation files
+docs/
+evaluation_*/
+EVALUATION_*.md
+COMMIT_*.md
+
 
 
 # API keys and sensitive files

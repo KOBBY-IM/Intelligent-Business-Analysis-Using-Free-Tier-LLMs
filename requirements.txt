@@ -11,7 +11,7 @@ pydantic
 python-dotenv
 plotly
 requests
-httpx
+httpx 
 openai
 google-generativeai
 nltk

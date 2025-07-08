@@ -3,14 +3,15 @@
 Abstract base class for all LLM providers with unified response format, rate limiting, and retry logic.
 """
 
-import time
 import logging
+import time
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional, List, Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from functools import wraps
+from typing import Any, Callable, List, Optional
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class LLMResponse:
@@ -22,8 +23,10 @@ class LLMResponse:
     error: Optional[str] = None
     raw_response: Any = None
 
+
 class RateLimitException(Exception):
     pass
+
 
 def rate_limit_and_retry(max_retries: int = 3, min_interval: float = 1.0):
     """
@@ -31,8 +34,10 @@ def rate_limit_and_retry(max_retries: int = 3, min_interval: float = 1.0):
     min_interval: Minimum seconds between calls.
     max_retries: Number of retries on failure.
     """
+
     def decorator(func: Callable):
         last_call = [0.0]
+
         @wraps(func)
         def wrapper(self, *args, **kwargs):
             for attempt in range(max_retries):
@@ -45,19 +50,33 @@ def rate_limit_and_retry(max_retries: int = 3, min_interval: float = 1.0):
                     last_call[0] = time.time()
                     return result
                 except RateLimitException as e:
-                    logger.warning(f"Rate limit hit: {e}. Retrying ({attempt+1}/{max_retries})...")
+                    logger.warning(
+                        f"Rate limit hit: {e}. Retrying ({attempt+1}/{max_retries})..."
+                    )
                     time.sleep(min_interval)
                 except Exception as e:
-                    logger.error(f"API call failed: {e}. Retrying ({attempt+1}/{max_retries})...")
+                    logger.error(
+                        f"API call failed: {e}. Retrying ({attempt+1}/{max_retries})..."
+                    )
                     time.sleep(min_interval)
-            return LLMResponse(success=False, text="", model="", error="Max retries exceeded", raw_response=None)
+            return LLMResponse(
+                success=False,
+                text="",
+                model="",
+                error="Max retries exceeded",
+                raw_response=None,
+            )
+
         return wrapper
+
     return decorator
+
 
 class BaseProvider(ABC):
     """
     Abstract base class for all LLM providers.
     """
+
     def __init__(self, provider_name: str, models: Optional[List[str]] = None):
         self.provider_name = provider_name
         self.models = models or []
@@ -65,22 +84,21 @@ class BaseProvider(ABC):
 
     @abstractmethod
     @rate_limit_and_retry(max_retries=3, min_interval=1.0)
-    def generate_response(self, query: str, context: str = "", model: Optional[str] = None, **kwargs) -> LLMResponse:
+    def generate_response(
+        self, query: str, context: str = "", model: Optional[str] = None, **kwargs
+    ) -> LLMResponse:
         """
         Generate a response from the LLM provider.
         Returns a unified LLMResponse.
         """
-        pass
 
     @abstractmethod
     def list_models(self) -> List[str]:
         """Return a list of available model names."""
-        pass
 
     @abstractmethod
     def health_check(self) -> bool:
         """Return True if provider is healthy and available."""
-        pass
 
     def get_provider_name(self) -> str:
         return self.provider_name
@@ -89,4 +107,4 @@ class BaseProvider(ABC):
         return self.last_health
 
     def set_last_health(self, status: bool):
-        self.last_health = status 
+        self.last_health = status
