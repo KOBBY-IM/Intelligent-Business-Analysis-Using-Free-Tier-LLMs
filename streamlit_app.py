@@ -30,16 +30,15 @@ def main():
         st.info("""
         **For Streamlit Cloud deployment:**
         
-        1. **Generate fixed responses locally first:**
-           ```bash
-           python3 scripts/generate_fixed_blind_responses.py
-           ```
+        Generate fixed responses locally first:
+        ```bash
+        python3 scripts/generate_fixed_blind_responses.py
+        ```
         
-        2. **Upload the generated file to Streamlit Cloud:**
-           - Upload `data/fixed_blind_responses.json` to your Streamlit Cloud app
-           - Place it in the `data/` directory
-        
-        3. **Redeploy your app**
+        Upload the generated file to Streamlit Cloud:
+        1. Upload `data/fixed_blind_responses.json` to your Streamlit Cloud app
+        2. Place it in the `data/` directory
+        3. Redeploy your app
         
         **Note:** Fixed responses ensure all users see the same LLM responses for fair evaluation.
         """)
@@ -47,16 +46,25 @@ def main():
     
     # Import and run the main UI
     try:
-        from src.ui.pages.blind_evaluation import main as blind_eval_main
-        blind_eval_main()
-    except ImportError:
-        # Fallback to direct import
+        from src.ui.main import main as ui_main
+        ui_main()
+    except ImportError as e:
+        st.error(f"❌ Import error: {str(e)}")
+        st.info("Please check that all required modules are available.")
+        
+        # Show debug information
+        st.subheader("Debug Information")
+        st.write(f"Current working directory: {Path.cwd()}")
+        st.write(f"Python path: {sys.path}")
+        
+        # Show available files
         try:
-            from src.ui.main import main as ui_main
-            ui_main()
-        except ImportError as e:
-            st.error(f"❌ Import error: {str(e)}")
-            st.info("Please check that all required modules are available.")
+            st.write("Available files in src/:")
+            src_files = list((project_root / "src").rglob("*.py"))
+            for file in src_files[:20]:  # Show first 20 files
+                st.write(f"- {file}")
+        except Exception as ex:
+            st.write(f"Could not list src files: {ex}")
 
 if __name__ == "__main__":
     main() 
