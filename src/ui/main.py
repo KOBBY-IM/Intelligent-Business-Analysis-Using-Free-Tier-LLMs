@@ -49,6 +49,38 @@ def main():
     # Check for API keys
     api_keys_available = check_api_keys()
     
+    # Initialize session state for navigation
+    if "current_page" not in st.session_state:
+        st.session_state.current_page = "home"
+    
+    # Sidebar navigation
+    with st.sidebar:
+        st.title("🧠 LLM Evaluation")
+        
+        if st.button("🏠 Home", use_container_width=True):
+            st.session_state.current_page = "home"
+            
+        if st.button("📊 Blind Evaluation", use_container_width=True, disabled=not api_keys_available):
+            st.session_state.current_page = "blind_eval"
+            
+        if st.button("📈 Metrics Dashboard", use_container_width=True, disabled=not api_keys_available):
+            st.session_state.current_page = "metrics"
+            
+        if st.button("📤 Export Results", use_container_width=True, disabled=not api_keys_available):
+            st.session_state.current_page = "export"
+    
+    # Main content based on current page
+    if st.session_state.current_page == "home":
+        show_home_page(api_keys_available)
+    elif st.session_state.current_page == "blind_eval":
+        show_blind_evaluation()
+    elif st.session_state.current_page == "metrics":
+        show_metrics_dashboard()
+    elif st.session_state.current_page == "export":
+        show_export_page()
+
+def show_home_page(api_keys_available):
+    """Display the home page content."""
     # Main header
     st.title("🧠 Intelligent Business Analysis Using Free-Tier LLMs")
     st.markdown("### A Comparative Framework for Multi-Industry Decision Support")
@@ -91,9 +123,10 @@ def main():
         - Rate model performance
         - Contribute to research data
         """)
-        if st.button("Start Blind Evaluation", key="blind_eval", disabled=not api_keys_available):
+        if st.button("Start Blind Evaluation", key="blind_eval_home", disabled=not api_keys_available):
             if api_keys_available:
-                st.switch_page("pages/1_Blind_Evaluation.py")
+                st.session_state.current_page = "blind_eval"
+                st.rerun()
     
     with col2:
         st.markdown("""
@@ -102,9 +135,10 @@ def main():
         - Compare model accuracy
         - Analyze response quality
         """)
-        if st.button("View Metrics", key="metrics", disabled=not api_keys_available):
+        if st.button("View Metrics", key="metrics_home", disabled=not api_keys_available):
             if api_keys_available:
-                st.switch_page("pages/2_Metrics_Dashboard.py")
+                st.session_state.current_page = "metrics"
+                st.rerun()
     
     with col3:
         st.markdown("""
@@ -113,9 +147,10 @@ def main():
         - Access research findings
         - Generate reports
         """)
-        if st.button("Export Data", key="export", disabled=not api_keys_available):
+        if st.button("Export Data", key="export_home", disabled=not api_keys_available):
             if api_keys_available:
-                st.switch_page("pages/3_Export_Results.py")
+                st.session_state.current_page = "export"
+                st.rerun()
     
     # Quick system status
     st.markdown("---")
@@ -145,6 +180,122 @@ def main():
                 
     except Exception as e:
         st.error(f"❌ System check failed: {str(e)}")
+
+def show_blind_evaluation():
+    """Display the blind evaluation page."""
+    st.title("📊 Blind Evaluation")
+    
+    try:
+        # Import and run the blind evaluation
+        import sys
+        from pathlib import Path
+        
+        # Add src to path
+        project_root = Path(__file__).parent.parent.parent
+        sys.path.insert(0, str(project_root / "src"))
+        
+        # Import the blind evaluation components
+        from src.rag.blind_test_generator import BlindTestGenerator
+        from src.utils.question_sampler import QuestionSampler
+        from src.llm_providers.provider_manager import ProviderManager
+        
+        st.info("Loading blind evaluation interface...")
+        
+        # Load fixed responses
+        import json
+        fixed_responses_file = Path("data/fixed_blind_responses.json")
+        
+        if not fixed_responses_file.exists():
+            st.error("❌ Fixed blind responses not found!")
+            st.info("Please generate fixed responses first using the setup script.")
+            return
+            
+        with open(fixed_responses_file, 'r') as f:
+            fixed_data = json.load(f)
+            
+        st.success(f"✅ Loaded {len(fixed_data['responses'])} fixed responses")
+        
+        # Simple evaluation interface
+        st.markdown("### Compare LLM Responses")
+        
+        # Select a random question
+        questions = list(fixed_data['responses'].keys())
+        if "selected_question" not in st.session_state:
+            import random
+            st.session_state.selected_question = random.choice(questions)
+            
+        question_data = fixed_data['responses'][st.session_state.selected_question]
+        
+        st.markdown(f"**Question:** {question_data['question']}")
+        st.markdown(f"**Domain:** {question_data['domain'].title()}")
+        
+        # Show responses
+        responses = question_data['llm_responses']
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown("#### Response A")
+            st.write(responses['groq']['response'])
+            
+        with col2:
+            st.markdown("#### Response B") 
+            st.write(responses['gemini']['response'])
+            
+        with col3:
+            st.markdown("#### Response C")
+            st.write(responses['openrouter']['response'])
+            
+        # Rating interface
+        st.markdown("---")
+        st.markdown("### Rate the Responses")
+        
+        rating = st.radio(
+            "Which response is most helpful for business decision-making?",
+            ["Response A", "Response B", "Response C"],
+            key="response_rating"
+        )
+        
+        if st.button("Submit Rating", key="submit_rating"):
+            st.success(f"✅ Thank you! You selected {rating}")
+            # Here you could save the rating to a file
+            
+            # Load next question
+            st.session_state.selected_question = random.choice(questions)
+            st.rerun()
+            
+        if st.button("Next Question", key="next_question"):
+            import random
+            st.session_state.selected_question = random.choice(questions)
+            st.rerun()
+            
+    except Exception as e:
+        st.error(f"❌ Error loading blind evaluation: {str(e)}")
+        st.info("Please check that all required files and modules are available.")
+
+def show_metrics_dashboard():
+    """Display the metrics dashboard."""
+    st.title("📈 Metrics Dashboard")
+    st.info("Metrics dashboard functionality will be implemented here.")
+    
+    # Basic placeholder content
+    st.markdown("### Performance Overview")
+    st.markdown("This section will show:")
+    st.markdown("- Response quality metrics")
+    st.markdown("- User preference statistics") 
+    st.markdown("- Model comparison charts")
+
+def show_export_page():
+    """Display the export page."""
+    st.title("📤 Export Results")
+    st.info("Export functionality will be implemented here.")
+    
+    # Basic placeholder content
+    st.markdown("### Available Exports")
+    st.markdown("This section will provide:")
+    st.markdown("- CSV download of evaluation results")
+    st.markdown("- Summary reports")
+    st.markdown("- Statistical analysis files")
 
 def check_api_keys():
     """Check if required API keys are available."""
