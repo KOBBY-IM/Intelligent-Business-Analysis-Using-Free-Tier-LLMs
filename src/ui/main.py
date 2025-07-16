@@ -529,19 +529,73 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
         # Dynamically create response labels based on available responses
         response_labels = [chr(65 + i) for i in range(len(st.session_state.response_order))]  # A, B, C, D, etc.
         
-        # Display responses
+        # Display responses in a 2x2 grid
         st.markdown("### Compare the Responses")
         st.markdown("*Please read all responses carefully and rank them from best to worst.*")
         
-        for i, label in enumerate(response_labels):
-            provider = st.session_state.response_order[i]
-            response_data = responses[provider]
-            
-            with st.container():
-                st.markdown(f"#### Response {label}")
+        # Add some spacing
+        st.markdown("")
+        
+        # Create a 2x2 grid for responses
+        if len(response_labels) == 4:
+            # First row: Response A and B
+            col1, col2 = st.columns(2)
+            with col1:
+                provider = st.session_state.response_order[0]
+                response_data = responses[provider]
+                st.markdown("""
+                <div style="border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; margin: 10px 0; background-color: #f8f9fa;">
+                <h4 style="color: #1f77b4; margin-bottom: 10px;">📄 Response A</h4>
+                """, unsafe_allow_html=True)
                 st.markdown(f"*{response_data['response']}*")
-                st.caption(f"Length: {len(response_data['response'])} characters")
-                st.markdown("---")
+                st.caption(f"📏 Length: {len(response_data['response'])} characters")
+                st.markdown("</div>", unsafe_allow_html=True)
+            
+            with col2:
+                provider = st.session_state.response_order[1]
+                response_data = responses[provider]
+                st.markdown("""
+                <div style="border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; margin: 10px 0; background-color: #f8f9fa;">
+                <h4 style="color: #ff7f0e; margin-bottom: 10px;">📄 Response B</h4>
+                """, unsafe_allow_html=True)
+                st.markdown(f"*{response_data['response']}*")
+                st.caption(f"📏 Length: {len(response_data['response'])} characters")
+                st.markdown("</div>", unsafe_allow_html=True)
+            
+            # Second row: Response C and D
+            col3, col4 = st.columns(2)
+            with col3:
+                provider = st.session_state.response_order[2]
+                response_data = responses[provider]
+                st.markdown("""
+                <div style="border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; margin: 10px 0; background-color: #f8f9fa;">
+                <h4 style="color: #2ca02c; margin-bottom: 10px;">📄 Response C</h4>
+                """, unsafe_allow_html=True)
+                st.markdown(f"*{response_data['response']}*")
+                st.caption(f"📏 Length: {len(response_data['response'])} characters")
+                st.markdown("</div>", unsafe_allow_html=True)
+            
+            with col4:
+                provider = st.session_state.response_order[3]
+                response_data = responses[provider]
+                st.markdown("""
+                <div style="border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; margin: 10px 0; background-color: #f8f9fa;">
+                <h4 style="color: #d62728; margin-bottom: 10px;">📄 Response D</h4>
+                """, unsafe_allow_html=True)
+                st.markdown(f"*{response_data['response']}*")
+                st.caption(f"📏 Length: {len(response_data['response'])} characters")
+                st.markdown("</div>", unsafe_allow_html=True)
+        else:
+            # Fallback for different numbers of responses
+            for i, label in enumerate(response_labels):
+                provider = st.session_state.response_order[i]
+                response_data = responses[provider]
+                
+                with st.container():
+                    st.markdown(f"#### Response {label}")
+                    st.markdown(f"*{response_data['response']}*")
+                    st.caption(f"Length: {len(response_data['response'])} characters")
+                    st.markdown("---")
         
         # Ranking interface
         st.markdown("### Your Ranking")
