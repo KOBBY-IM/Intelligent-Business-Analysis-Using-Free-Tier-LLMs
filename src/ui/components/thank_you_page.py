@@ -198,7 +198,7 @@ def render_thank_you_page(
                 del st.session_state[key]
         
         # Redirect to main page
-        st.switch_page("src/ui/main.py")
+        st.switch_page("streamlit_app.py")
 
 
 def render_simple_thank_you(
@@ -229,7 +229,7 @@ def render_simple_thank_you(
     )
     
     if st.button("🏠 Return to Dashboard", type="primary", use_container_width=True):
-        st.switch_page("src/ui/main.py")
+        st.switch_page("streamlit_app.py")
 
 
 def render_completion_stats(session_id: str) -> Dict[str, any]:
