@@ -515,9 +515,10 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
         st.markdown(f"**Domain:** {question_data['domain'].title()}")
         
         # Show ground truth comparison
-        with st.expander("🏆 Ground Truth Reference (100% Dataset Access)", expanded=False):
+        with st.expander("🏆 Ground Truth Reference (100% Dataset Access - Used for LLM Guidance)", expanded=False):
             st.markdown("### Ground Truth Analysis")
             st.markdown(f"**Answer:** {question_data.get('ground_truth', 'Ground truth not available')}")
+            st.info("💡 **Note:** This ground truth information is provided to LLMs as guidance for their analysis, along with 40% dataset access.")
             
             # Ground truth stats
             col1, col2, col3 = st.columns(3)
@@ -530,13 +531,13 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
             
             # Key insights
             if 'key_points' in question_data:
-                st.markdown("**Key Insights:**")
+                st.markdown("**Key Insights (Provided to LLMs):**")
                 for point in question_data['key_points']:
                     st.markdown(f"• {point}")
             
             # Factual claims
             if 'factual_claims' in question_data:
-                st.markdown("**Factual Claims:**")
+                st.markdown("**Factual Claims (For LLM Verification):**")
                 for claim in question_data['factual_claims']:
                     st.markdown(f"• {claim}")
         
@@ -558,7 +559,7 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
         # Display responses in a 2x2 grid
         st.markdown("### Compare the Responses")
         st.markdown("*Please read all responses carefully and rank them from best to worst.*")
-        st.markdown("**Note:** LLM responses are based on 40% dataset coverage, while Ground Truth has 100% access.")
+        st.markdown("**Note:** LLM responses use 40% dataset coverage + ground truth guidance for decision making.")
         
         # Add some spacing
         st.markdown("")
@@ -576,7 +577,7 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
                 """, unsafe_allow_html=True)
                 st.markdown(f"*{response_data['response']}*")
                 st.caption(f"📏 Length: {len(response_data['response'])} characters")
-                st.caption(f"🔍 Dataset Coverage: 40% | Provider: {provider.title()}")
+                st.caption(f"🔍 40% Dataset + Ground Truth Guidance | Provider: {provider.title()}")
                 st.markdown("</div>", unsafe_allow_html=True)
             
             with col2:
@@ -588,7 +589,7 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
                 """, unsafe_allow_html=True)
                 st.markdown(f"*{response_data['response']}*")
                 st.caption(f"📏 Length: {len(response_data['response'])} characters")
-                st.caption(f"🔍 Dataset Coverage: 40% | Provider: {provider.title()}")
+                st.caption(f"🔍 40% Dataset + Ground Truth Guidance | Provider: {provider.title()}")
                 st.markdown("</div>", unsafe_allow_html=True)
             
             # Second row: Response C and D
@@ -602,7 +603,7 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
                 """, unsafe_allow_html=True)
                 st.markdown(f"*{response_data['response']}*")
                 st.caption(f"📏 Length: {len(response_data['response'])} characters")
-                st.caption(f"🔍 Dataset Coverage: 40% | Provider: {provider.title()}")
+                st.caption(f"🔍 40% Dataset + Ground Truth Guidance | Provider: {provider.title()}")
                 st.markdown("</div>", unsafe_allow_html=True)
             
             with col4:
@@ -614,7 +615,7 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
                 """, unsafe_allow_html=True)
                 st.markdown(f"*{response_data['response']}*")
                 st.caption(f"📏 Length: {len(response_data['response'])} characters")
-                st.caption(f"🔍 Dataset Coverage: 40% | Provider: {provider.title()}")
+                st.caption(f"🔍 40% Dataset + Ground Truth Guidance | Provider: {provider.title()}")
                 st.markdown("</div>", unsafe_allow_html=True)
         else:
             # Fallback for different numbers of responses
@@ -626,7 +627,7 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
                     st.markdown(f"#### Response {label}")
                     st.markdown(f"*{response_data['response']}*")
                     st.caption(f"Length: {len(response_data['response'])} characters")
-                    st.caption(f"Dataset Coverage: 40% | Provider: {provider.title()}")
+                    st.caption(f"40% Dataset + Ground Truth Guidance | Provider: {provider.title()}")
                     st.markdown("---")
         
         # Ranking interface

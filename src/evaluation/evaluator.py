@@ -461,22 +461,30 @@ class LLMEvaluator:
         return "\n".join(context_parts)
     
     def _generate_limited_context(self, question_id: str, ground_truth_answer, coverage: float = 0.4) -> str:
-        """Generate limited context for LLMs (40% dataset access)"""
-        # For LLMs, we simulate limited dataset access
-        # In practice, this would be implemented with actual RAG retrieval
+        """Generate limited context for LLMs (40% dataset access) with ground truth guidance"""
+        # For LLMs, we provide limited dataset access PLUS ground truth guidance
         context_parts = [
-            f"Limited dataset analysis for {ground_truth_answer.domain} domain:",
+            f"Business Analysis Task for {ground_truth_answer.domain} domain:",
+            f"Question: {ground_truth_answer.question}",
+            f"",
+            f"Available Dataset Information (40% coverage):",
             f"Data source: {ground_truth_answer.metadata.get('data_source', 'Unknown')} (Partial access)",
             f"Analysis type: {ground_truth_answer.metadata.get('analysis_type', 'Unknown')}",
             f"Dataset coverage: {coverage * 100}% (Limited access)",
-            f"Note: This analysis is based on a subset of available data.",
+            f"",
+            f"Ground Truth Reference (for guidance):",
+            f"Key insights to consider: {', '.join(ground_truth_answer.key_points)}",
+            f"Factual claims to verify: {', '.join(ground_truth_answer.factual_claims)}",
+            f"Expected analysis depth: {ground_truth_answer.expected_length}",
+            f"",
+            f"Instructions: Use the available dataset information (40% coverage) along with the ground truth insights above to provide a comprehensive business analysis. The ground truth serves as a reference for what information should be included and verified.",
         ]
         
-        # Add partial key points (simulating limited access)
+        # Add partial key points from limited dataset access
         if ground_truth_answer.key_points:
             num_points = max(1, int(len(ground_truth_answer.key_points) * coverage))
             partial_points = ground_truth_answer.key_points[:num_points]
-            context_parts.append(f"Available insights: {', '.join(partial_points)}")
+            context_parts.append(f"Available dataset insights: {', '.join(partial_points)}")
         
         return "\n".join(context_parts)
     
