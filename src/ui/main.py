@@ -514,6 +514,32 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
         st.markdown(f"**Question:** {question_data['question']}")
         st.markdown(f"**Domain:** {question_data['domain'].title()}")
         
+        # Show ground truth comparison
+        with st.expander("🏆 Ground Truth Reference (100% Dataset Access)", expanded=False):
+            st.markdown("### Ground Truth Analysis")
+            st.markdown(f"**Answer:** {question_data.get('ground_truth', 'Ground truth not available')}")
+            
+            # Ground truth stats
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Dataset Coverage", "100%", "Full access")
+            with col2:
+                st.metric("Data Sources", question_data.get('data_source', 'Unknown'), "Complete dataset")
+            with col3:
+                st.metric("Analysis Type", question_data.get('analysis_type', 'Unknown'), "Comprehensive")
+            
+            # Key insights
+            if 'key_points' in question_data:
+                st.markdown("**Key Insights:**")
+                for point in question_data['key_points']:
+                    st.markdown(f"• {point}")
+            
+            # Factual claims
+            if 'factual_claims' in question_data:
+                st.markdown("**Factual Claims:**")
+                for claim in question_data['factual_claims']:
+                    st.markdown(f"• {claim}")
+        
         # Show business context
         with st.expander("📋 Business Context (Click to view)", expanded=False):
             st.text(question_data['rag_context'])
@@ -532,6 +558,7 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
         # Display responses in a 2x2 grid
         st.markdown("### Compare the Responses")
         st.markdown("*Please read all responses carefully and rank them from best to worst.*")
+        st.markdown("**Note:** LLM responses are based on 40% dataset coverage, while Ground Truth has 100% access.")
         
         # Add some spacing
         st.markdown("")
@@ -549,6 +576,7 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
                 """, unsafe_allow_html=True)
                 st.markdown(f"*{response_data['response']}*")
                 st.caption(f"📏 Length: {len(response_data['response'])} characters")
+                st.caption(f"🔍 Dataset Coverage: 40% | Provider: {provider.title()}")
                 st.markdown("</div>", unsafe_allow_html=True)
             
             with col2:
@@ -560,6 +588,7 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
                 """, unsafe_allow_html=True)
                 st.markdown(f"*{response_data['response']}*")
                 st.caption(f"📏 Length: {len(response_data['response'])} characters")
+                st.caption(f"🔍 Dataset Coverage: 40% | Provider: {provider.title()}")
                 st.markdown("</div>", unsafe_allow_html=True)
             
             # Second row: Response C and D
@@ -573,6 +602,7 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
                 """, unsafe_allow_html=True)
                 st.markdown(f"*{response_data['response']}*")
                 st.caption(f"📏 Length: {len(response_data['response'])} characters")
+                st.caption(f"🔍 Dataset Coverage: 40% | Provider: {provider.title()}")
                 st.markdown("</div>", unsafe_allow_html=True)
             
             with col4:
@@ -584,6 +614,7 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
                 """, unsafe_allow_html=True)
                 st.markdown(f"*{response_data['response']}*")
                 st.caption(f"📏 Length: {len(response_data['response'])} characters")
+                st.caption(f"🔍 Dataset Coverage: 40% | Provider: {provider.title()}")
                 st.markdown("</div>", unsafe_allow_html=True)
         else:
             # Fallback for different numbers of responses
@@ -595,6 +626,7 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
                     st.markdown(f"#### Response {label}")
                     st.markdown(f"*{response_data['response']}*")
                     st.caption(f"Length: {len(response_data['response'])} characters")
+                    st.caption(f"Dataset Coverage: 40% | Provider: {provider.title()}")
                     st.markdown("---")
         
         # Ranking interface

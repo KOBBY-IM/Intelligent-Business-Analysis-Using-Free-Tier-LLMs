@@ -43,6 +43,21 @@ class EvaluationResult:
     ground_truth: str
     metrics: EvaluationMetrics
     context_used: str = ""
+    dataset_coverage: float = 0.0  # Percentage of dataset accessed
+    retrieval_stats: Dict[str, Any] = None  # Retrieval quality metrics
+    evaluation_timestamp: str = ""
+
+
+@dataclass
+class GroundTruthComparison:
+    """Container for ground truth vs LLM comparison"""
+    
+    question_id: str
+    ground_truth_response: str
+    ground_truth_context: str
+    ground_truth_stats: Dict[str, Any]
+    llm_responses: Dict[str, EvaluationResult]  # provider_name -> result
+    comparison_metrics: Dict[str, Any]
     evaluation_timestamp: str = ""
 
 
@@ -312,6 +327,205 @@ class LLMEvaluator:
         except Exception as e:
             logger.error(f"Error in batch evaluation: {e}")
             raise
+
+    def run_ground_truth_comparison(
+        self,
+        question_id: str,
+        provider_names: Optional[List[str]] = None,
+        llm_dataset_coverage: float = 0.4,  # 40% for LLMs
+        ground_truth_coverage: float = 1.0,  # 100% for ground truth
+    ) -> GroundTruthComparison:
+        """
+        Run comparison between ground truth (100% dataset) and LLMs (40% dataset)
+        
+        Args:
+            question_id: ID of the question to evaluate
+            provider_names: Specific providers to test (None for all)
+            llm_dataset_coverage: Dataset coverage percentage for LLMs (default 40%)
+            ground_truth_coverage: Dataset coverage percentage for ground truth (default 100%)
+            
+        Returns:
+            GroundTruthComparison with comprehensive comparison
+        """
+        try:
+            # Get ground truth answer
+            ground_truth_answer = self.ground_truth_manager.get_answer(question_id)
+            if not ground_truth_answer:
+                raise ValueError(f"Ground truth not found for question: {question_id}")
+            
+            # Generate ground truth context (100% dataset access)
+            ground_truth_context = self._generate_full_context(
+                question_id, ground_truth_answer, coverage=ground_truth_coverage
+            )
+            
+            # Get ground truth stats
+            ground_truth_stats = {
+                "dataset_coverage": ground_truth_coverage,
+                "context_length": len(ground_truth_context),
+                "data_sources": ground_truth_answer.metadata.get("data_source", "Unknown"),
+                "analysis_type": ground_truth_answer.metadata.get("analysis_type", "Unknown"),
+                "key_points_count": len(ground_truth_answer.key_points),
+                "factual_claims_count": len(ground_truth_answer.factual_claims),
+            }
+            
+            # Get providers to test
+            if provider_names:
+                providers_to_test = provider_names
+            else:
+                providers_to_test = self.provider_manager.get_provider_names()
+            
+            # Generate LLM responses with limited dataset access
+            llm_responses = {}
+            for provider_name in providers_to_test:
+                try:
+                    provider = self.provider_manager.get_provider(provider_name)
+                    if not provider:
+                        continue
+                    
+                    # Generate limited context for LLM (40% dataset access)
+                    llm_context = self._generate_limited_context(
+                        question_id, ground_truth_answer, coverage=llm_dataset_coverage
+                    )
+                    
+                    # Get LLM response
+                    start_time = time.time()
+                    llm_response = provider.generate_response(
+                        query=ground_truth_answer.question,
+                        context=llm_context,
+                        max_tokens=500
+                    )
+                    response_time_ms = (time.time() - start_time) * 1000
+                    
+                    # Calculate retrieval stats
+                    retrieval_stats = {
+                        "dataset_coverage": llm_dataset_coverage,
+                        "context_length": len(llm_context),
+                        "context_quality": self._calculate_context_quality(llm_context),
+                        "retrieval_time_ms": response_time_ms,
+                    }
+                    
+                    # Evaluate LLM response
+                    evaluation_result = self.evaluate_single_response(
+                        question_id=question_id,
+                        provider_name=provider_name,
+                        model_name=provider.model_name,
+                        response=llm_response.response,
+                        response_time_ms=response_time_ms,
+                        tokens_used=llm_response.tokens_used,
+                        context=llm_context,
+                    )
+                    
+                    # Add dataset coverage and retrieval stats
+                    evaluation_result.dataset_coverage = llm_dataset_coverage
+                    evaluation_result.retrieval_stats = retrieval_stats
+                    
+                    llm_responses[provider_name] = evaluation_result
+                    
+                except Exception as e:
+                    logger.error(f"Error evaluating {provider_name}: {e}")
+                    continue
+            
+            # Calculate comparison metrics
+            comparison_metrics = self._calculate_comparison_metrics(
+                ground_truth_answer, llm_responses
+            )
+            
+            result = GroundTruthComparison(
+                question_id=question_id,
+                ground_truth_response=ground_truth_answer.answer,
+                ground_truth_context=ground_truth_context,
+                ground_truth_stats=ground_truth_stats,
+                llm_responses=llm_responses,
+                comparison_metrics=comparison_metrics,
+                evaluation_timestamp=datetime.now().isoformat(),
+            )
+            
+            logger.info(f"Completed ground truth comparison for question {question_id}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error in ground truth comparison: {e}")
+            raise
+    
+    def _generate_full_context(self, question_id: str, ground_truth_answer, coverage: float = 1.0) -> str:
+        """Generate full context for ground truth (100% dataset access)"""
+        # For ground truth, we have access to all data
+        context_parts = [
+            f"Complete dataset analysis for {ground_truth_answer.domain} domain:",
+            f"Data source: {ground_truth_answer.metadata.get('data_source', 'Unknown')}",
+            f"Analysis type: {ground_truth_answer.metadata.get('analysis_type', 'Unknown')}",
+            f"Key insights: {', '.join(ground_truth_answer.key_points)}",
+            f"Factual claims: {', '.join(ground_truth_answer.factual_claims)}",
+            f"Dataset coverage: {coverage * 100}% (Full access)",
+        ]
+        return "\n".join(context_parts)
+    
+    def _generate_limited_context(self, question_id: str, ground_truth_answer, coverage: float = 0.4) -> str:
+        """Generate limited context for LLMs (40% dataset access)"""
+        # For LLMs, we simulate limited dataset access
+        # In practice, this would be implemented with actual RAG retrieval
+        context_parts = [
+            f"Limited dataset analysis for {ground_truth_answer.domain} domain:",
+            f"Data source: {ground_truth_answer.metadata.get('data_source', 'Unknown')} (Partial access)",
+            f"Analysis type: {ground_truth_answer.metadata.get('analysis_type', 'Unknown')}",
+            f"Dataset coverage: {coverage * 100}% (Limited access)",
+            f"Note: This analysis is based on a subset of available data.",
+        ]
+        
+        # Add partial key points (simulating limited access)
+        if ground_truth_answer.key_points:
+            num_points = max(1, int(len(ground_truth_answer.key_points) * coverage))
+            partial_points = ground_truth_answer.key_points[:num_points]
+            context_parts.append(f"Available insights: {', '.join(partial_points)}")
+        
+        return "\n".join(context_parts)
+    
+    def _calculate_context_quality(self, context: str) -> float:
+        """Calculate context quality score"""
+        if not context:
+            return 0.0
+        
+        # Simple quality metrics
+        length_score = min(len(context) / 1000, 1.0)  # Normalize by expected length
+        diversity_score = len(set(context.split())) / len(context.split()) if context.split() else 0
+        
+        return (length_score + diversity_score) / 2
+    
+    def _calculate_comparison_metrics(self, ground_truth_answer, llm_responses: Dict[str, EvaluationResult]) -> Dict[str, Any]:
+        """Calculate comparison metrics between ground truth and LLM responses"""
+        if not llm_responses:
+            return {}
+        
+        metrics = {
+            "total_llm_responses": len(llm_responses),
+            "average_accuracy": 0.0,
+            "best_provider": None,
+            "worst_provider": None,
+            "accuracy_range": (0.0, 0.0),
+            "coverage_comparison": {
+                "ground_truth_coverage": 1.0,
+                "llm_average_coverage": 0.4,
+                "coverage_gap": 0.6,
+            }
+        }
+        
+        # Calculate accuracy metrics
+        accuracies = []
+        for provider_name, result in llm_responses.items():
+            accuracy = result.metrics.factual_accuracy
+            accuracies.append(accuracy)
+            
+            if metrics["best_provider"] is None or accuracy > llm_responses[metrics["best_provider"]].metrics.factual_accuracy:
+                metrics["best_provider"] = provider_name
+            
+            if metrics["worst_provider"] is None or accuracy < llm_responses[metrics["worst_provider"]].metrics.factual_accuracy:
+                metrics["worst_provider"] = provider_name
+        
+        if accuracies:
+            metrics["average_accuracy"] = sum(accuracies) / len(accuracies)
+            metrics["accuracy_range"] = (min(accuracies), max(accuracies))
+        
+        return metrics
 
     def _generate_summary_stats(
         self, results: List[EvaluationResult]
