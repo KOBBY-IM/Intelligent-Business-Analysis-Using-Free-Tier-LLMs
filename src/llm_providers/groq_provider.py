@@ -14,14 +14,14 @@ from .base_provider import BaseProvider, LLMResponse
 
 logger = logging.getLogger(__name__)
 
-GROQ_MODELS = ["llama3-8b-8192", "qwen-qwq-32b"]
-
 
 class GroqProvider(BaseProvider):
-    def __init__(self):
-        super().__init__(provider_name="groq", models=GROQ_MODELS)
+    def __init__(self, model_list):
+        super().__init__("Groq", model_list)
         self.api_key = os.getenv("GROQ_API_KEY")
         self.base_url = "https://api.groq.com/openai/v1/chat/completions"
+        if not self.api_key:
+            logger.warning("GROQ_API_KEY not found in environment variables")
 
     def _headers(self):
         return {"Authorization": f"Bearer {self.api_key}"}

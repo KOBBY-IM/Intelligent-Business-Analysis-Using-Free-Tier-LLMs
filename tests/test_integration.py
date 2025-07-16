@@ -13,7 +13,7 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from config.config_loader import ConfigLoader
-from evaluation.evaluator import Evaluator
+from evaluation.evaluator import LLMEvaluator
 from llm_providers.provider_manager import ProviderManager
 from rag.pipeline import RAGPipeline
 
@@ -26,7 +26,7 @@ class TestFullSystemIntegration:
         """Set up the complete system for integration testing."""
         # Initialize all components
         provider_manager = ProviderManager()
-        evaluator = Evaluator(data_dir=temp_data_dir)
+        evaluator = LLMEvaluator(data_dir=temp_data_dir)
         rag_pipeline = RAGPipeline(data_dir=temp_data_dir)
         config_loader = ConfigLoader()
 
@@ -365,7 +365,7 @@ class TestFullSystemIntegration:
         rag_pipeline.save_pipeline()
 
         # Create new instances (simulating system restart)
-        new_evaluator = Evaluator(data_dir=data_dir)
+        new_evaluator = LLMEvaluator(data_dir=data_dir)
         new_rag_pipeline = RAGPipeline(data_dir=data_dir)
 
         # Load data
@@ -397,7 +397,7 @@ class TestPerformanceIntegration:
         import time
 
         provider_manager = ProviderManager()
-        evaluator = Evaluator(data_dir=temp_data_dir)
+        evaluator = LLMEvaluator(data_dir=temp_data_dir)
 
         # Mock fast responses
         mock_response = {
@@ -468,7 +468,7 @@ class TestPerformanceIntegration:
             components.extend(
                 [
                     ProviderManager(),
-                    Evaluator(data_dir=temp_data_dir),
+                    LLMEvaluator(data_dir=temp_data_dir),
                     RAGPipeline(data_dir=temp_data_dir),
                 ]
             )
@@ -697,7 +697,7 @@ class TestScalabilityIntegration:
     async def test_system_scalability(self, temp_data_dir, mock_env_vars):
         """Test system scalability with increasing load."""
         provider_manager = ProviderManager()
-        evaluator = Evaluator(data_dir=temp_data_dir)
+        evaluator = LLMEvaluator(data_dir=temp_data_dir)
 
         # Mock responses
         mock_response = {
@@ -768,7 +768,7 @@ class TestScalabilityIntegration:
             # Create components with increasing data
             components = []
             for _ in range(data_size):
-                components.append(Evaluator(data_dir=temp_data_dir))
+                components.append(LLMEvaluator(data_dir=temp_data_dir))
                 components.append(RAGPipeline(data_dir=temp_data_dir))
 
             current_memory = process.memory_info().rss

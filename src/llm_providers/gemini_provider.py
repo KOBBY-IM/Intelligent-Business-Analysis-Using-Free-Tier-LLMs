@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 class GeminiProvider(BaseProvider):
     """Gemini LLM Provider with unified interface"""
 
-    def __init__(self):
-        super().__init__("Gemini", ["gemini-1.5-flash", "gemma-3-12b-it"])
+    def __init__(self, model_list):
+        super().__init__("Gemini", model_list)
 
         self.api_key = os.getenv("GOOGLE_API_KEY")
         self.base_url = "https://generativelanguage.googleapis.com/v1beta/models"
@@ -69,7 +69,7 @@ class GeminiProvider(BaseProvider):
             )
 
         # Use default model if none specified
-        model_name = model or "gemini-1.5-flash"
+        model_name = model or "gemma-3-12b-it"
 
         if model_name not in self.models:
             return LLMResponse(

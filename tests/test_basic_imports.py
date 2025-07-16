@@ -114,9 +114,9 @@ class TestBasicFunctionality:
 
             # Set a dummy API key for testing
             os.environ["GROQ_API_KEY"] = "test_key"
-            provider = GroqProvider()
+            provider = GroqProvider(model_list=["llama3-8b-8192"])
             assert provider is not None
-            assert provider.provider_name == "groq"
+            assert provider.provider_name == "Groq"
         except Exception as e:
             pytest.fail(f"Failed to create GroqProvider: {e}")
 

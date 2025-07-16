@@ -13,19 +13,19 @@ import pytest
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from evaluation.evaluator import Evaluator
+from evaluation.evaluator import LLMEvaluator
 from evaluation.ground_truth import GroundTruthManager
-from evaluation.metrics import MetricsCalculator
-from evaluation.statistical_analysis import StatisticalAnalyzer
+from evaluation.metrics import EvaluationMetricsCalculator
+from evaluation.statistical_analysis import LLMEvaluationStats
 
 
-class TestMetricsCalculator:
-    """Test the MetricsCalculator class."""
+class TestEvaluationMetricsCalculator:
+    """Test the EvaluationMetricsCalculator class."""
 
     @pytest.fixture
     def metrics_calculator(self):
-        """Create a MetricsCalculator instance for testing."""
-        return MetricsCalculator()
+        """Create a EvaluationMetricsCalculator instance for testing."""
+        return EvaluationMetricsCalculator()
 
     def test_metrics_calculator_initialization(self, metrics_calculator):
         """Test MetricsCalculator initialization."""
@@ -230,13 +230,13 @@ class TestGroundTruthManager:
             assert ground_truth is None
 
 
-class TestStatisticalAnalyzer:
-    """Test the StatisticalAnalyzer class."""
+class TestLLMEvaluationStats:
+    """Test the LLMEvaluationStats class."""
 
     @pytest.fixture
     def statistical_analyzer(self):
-        """Create a StatisticalAnalyzer instance for testing."""
-        return StatisticalAnalyzer()
+        """Create a LLMEvaluationStats instance for testing."""
+        return LLMEvaluationStats()
 
     def test_statistical_analyzer_initialization(self, statistical_analyzer):
         """Test StatisticalAnalyzer initialization."""
@@ -343,13 +343,13 @@ class TestStatisticalAnalyzer:
         assert "confidence_intervals" in report
 
 
-class TestEvaluator:
-    """Test the Evaluator class."""
+class TestLLMEvaluator:
+    """Test the LLMEvaluator class."""
 
     @pytest.fixture
     def evaluator(self, temp_data_dir):
-        """Create an Evaluator instance for testing."""
-        return Evaluator(data_dir=temp_data_dir)
+        """Create an LLMEvaluator instance for testing."""
+        return LLMEvaluator(results_dir=temp_data_dir)
 
     def test_evaluator_initialization(self, evaluator):
         """Test Evaluator initialization."""

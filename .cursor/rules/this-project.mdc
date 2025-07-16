@@ -1,0 +1,263 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# .cursorrules for LLM Business Intelligence Comparison Project
+# Project: Intelligent Business Analysis Using Free-Tier LLMs: A Comparative Framework for Multi-Industry Decision Support
+
+## PROJECT CONTEXT
+This is a production-quality MSc research project implementing a RAG-enabled evaluation system comparing Groq, Gemini, and Hugging Face free-tier LLMs across retail, finance, and healthcare domains. The system aims to deliver reproducible performance benchmarks and user-centered decision support recommendations. Emphasis is on statistical rigor, secure architecture, and user-centric design.
+
+## CORE PRINCIPLES
+
+### Security First
+- Do not hardcode credentials or API keys; use environment variables (.env) exclusively
+- Validate all input data (text, file, config) using Pydantic or custom validators
+- Implement rate limiting and monitor for API quota breaches
+- Sanitize user queries to mitigate prompt injection and XSS
+- Enforce file type/size restrictions on all uploads
+- Log security events via structured logging (no PII leakage)
+
+### Configuration-Driven Architecture
+- Externalize **all** tunables (thresholds, provider names, scoring weights) to YAML
+- Allow runtime switching between dev/staging/prod config via environment
+- Validate configuration schema using Pydantic models with custom validators
+- Avoid magic values in code (no hardcoded model names, thresholds, etc.)
+
+### Research-Grade Quality
+- Follow reproducible ML/AI research practices (fixed seeds, versioned dependencies)
+- Include blinded user evaluations and log interaction metadata (anonymized)
+- Use statistically validated metrics (e.g., ANOVA, Cohen’s d, confidence intervals)
+- Publish results in an exportable, analysis-ready format (CSV/JSON)
+
+### Production-Ready Code
+- Use full typing annotations across all modules
+- Catch and escalate custom exceptions (e.g., `LLMTimeoutError`, `DataValidationError`)
+- Structure logs with timestamps, severity, module, and request context
+- Maintain >80% test coverage (unit + integration)
+- Optimize response time with async I/O, lazy imports, and efficient RAG retrieval
+
+## TECHNOLOGY STACK
+
+### Backend
+- Python 3.9+
+- LangChain, FAISS or Chroma for vector store
+- Streamlit for UI, Pandas for analytics
+- Torch, Transformers, Sentence-Transformers for LLM integration
+- Structlog, Pydantic, python-dotenv for monitoring and validation
+
+### External APIs
+- Groq (Mixtral-8x7b), Google Generative AI (Gemini Pro), Hugging Face Inference API
+
+### Testing & Monitoring
+- pytest, pytest-asyncio, pytest-cov
+- logging, structlog, and performance benchmarks (e.g., `time.perf_counter()`)
+
+## FILE STRUCTURE
+Strictly follow the structure below:
+
+project_root/
+├── .env.example
+├── .cursorrules
+├── requirements.txt
+├── requirements-dev.txt
+├── pyproject.toml
+├── config/
+│   ├── app_config.yaml
+│   ├── llm_config.yaml
+│   ├── evaluation_config.yaml
+│   └── logging_config.yaml
+├── src/
+│   ├── __init__.py
+│   ├── config/
+│   ├── llm_providers/
+│   ├── rag/
+│   ├── evaluation/
+│   ├── data_processing/
+│   ├── ui/
+│   ├── security/
+│   └── utils/
+├── data/                 # gitignored
+├── tests/
+├── docs/
+└── scripts/
+
+## NAMING CONVENTIONS
+
+- Use `snake_case` for Python variables, functions, and file names
+- Use `PascalCase` for class names
+- Prefix test files with `test_`
+- Module-level constants in `UPPER_SNAKE_CASE`
+- All LLM-specific code in `llm_providers/`; RAG-specific in `rag/`
+
+## FUNCTIONAL CONTRACTS
+
+### LLM Provider Interface
+Each LLM provider must expose a consistent async interface:
+class BaseLLMProvider(ABC):
+    async def generate_response(self, query: str, context: str, **kwargs) -> Dict[str, Any]:
+        """Generate response to query using industry context"""
+
+### Evaluation Contracts
+Evaluation must include:
+- Relevance score
+- Factual accuracy (binary or scale)
+- Coherence (fluency/completeness)
+- Token count
+- Latency in seconds
+- JSON-compatible output format
+
+### RAG Component Rules
+- Implement chunking with adjustable overlap & length
+- Use cosine similarity for document retrieval
+- Store embeddings in FAISS or Chroma DB
+- Support offline and online retrieval modes
+
+## SECURITY RULES
+
+### .env Template Must Include:
+# API KEYS
+GROQ_API_KEY=
+GOOGLE_API_KEY=
+HUGGINGFACE_API_KEY=
+
+# SECURITY
+SECRET_KEY=
+DATA_ENCRYPTION_KEY=
+ALLOWED_HOSTS=localhost,127.0.0.1
+UPLOAD_MAX_SIZE_MB=10
+API_RATE_LIMIT_PER_MINUTE=60
+USER_QUERY_LIMIT_PER_HOUR=100
+
+### Input Validation
+All user input (queries, files, config) must:
+- Strip and sanitize special characters (`<>`, `exec`, `drop`)
+- Validate against max input length (e.g., 5,000 characters)
+- Allow only whitelisted file extensions (.csv, .json, .txt)
+- Require valid context (`retail`, `finance`, `healthcare`)
+
+## UI & UX
+
+- Streamlit pages must use `set_page_config`
+- Use `st.spinner()` for async operations
+- Display LLM results in separate tabs with metrics
+- Allow user to “select” best response to capture preference
+- Use Plotly charts for visualizing comparisons
+- Support export of evaluations to CSV
+
+## TESTING STANDARDS
+
+### Mandatory Coverage
+- Each LLM provider module
+- RAG retrieval accuracy
+- Evaluation metric correctness
+- User preference logging
+- Configuration validation
+- Edge case inputs (empty query, invalid config, API timeout)
+
+### Test Types
+- Unit tests (pytest)
+- Integration tests (mock APIs and RAG stack)
+- Performance tests (latency and memory tracking)
+
+## DEPLOYMENT REQUIREMENTS
+
+- Setup script must install dependencies, generate `.env`, and create directories
+- Streamlit entry point must be: `src/ui/main.py`
+- Include `Makefile` or `scripts/setup_environment.py` for convenience
+
+## DATA STORAGE
+
+- All datasets (industry-specific CSV/JSON) must go in `/data/` and be gitignored
+- All vector databases must persist to `/data/vector_store`
+- Exported metrics and user selections stored in `/data/results/*.json`
+
+## VERSION CONTROL
+
+- No secrets or credentials in Git history
+- Use `.gitignore` for `/data`, `.env`, `.pyc`, `__pycache__`, and `.ipynb_checkpoints`
+- Commit messages must be clear and task-oriented: `feat:`, `fix:`, `test:`, `refactor:`
+It should contain all workdone during that commit and not just the the title of of the days work
+- Never add the MVP file prompt or daily prompst to the readme file.
+- 
+## FINAL DELIVERABLES
+
+- Working Streamlit app for multi-industry LLM evaluation
+- `docs/` folder with setup, usage guide, evaluation methodology
+- `tests/` folder with >80% coverage
+- Exportable CSV of all results and user preferences
+- README with setup instructions and research summary
+
+
+
+## DEVELOPMENT TIMELINE – AGENT MVP INSTRUCTIONS
+
+# Week 1 – MVP 1: Secure LLM Evaluation Engine (Backend)
+week_1:
+  goal: >
+    Implement a secure backend for evaluating free-tier LLMs (Groq, Gemini, Hugging Face).
+    Build the foundation for RAG pipelines and evaluation metrics.
+
+  agent_tasks:
+    - Scaffold all folders and placeholder files as per FILE STRUCTURE
+    - Implement secure API clients for all three LLM providers under `src/llm_providers/`
+    - Load all credentials via `os.getenv()` using `.env` (no hardcoded strings)
+    - Build `BaseLLMProvider` abstract class + provider-specific implementations
+    - Implement `rag/retriever.py` and `rag/generator.py` for modular RAG
+    - Implement `evaluation/scorer.py` to calculate: accuracy, latency, token count
+    - Build CLI interface for batch evaluation (JSON config)
+    - Save logs securely in `/data/results/`
+
+  success_criteria:
+    - Models respond to a test query securely via CLI
+    - Logs contain timestamped, structured entries in JSON or CSV
+    - .env.example contains all required keys
+
+---
+
+# Week 2 – MVP 2: Streamlit Dashboard + UX Logging
+week_2:
+  goal: >
+    Build an interactive, user-friendly Streamlit dashboard styled with Microsoft Fluent UI. 
+    Prepare and implement blind user testing for LLM response comparison.
+
+  agent_tasks:
+    - Create `src/ui/main.py` as Streamlit entrypoint using `set_page_config()`
+    - Add tabbed interface for LLM response viewing per industry
+    - Display metrics (latency, token count, BLEU) for each response
+    - Randomize LLM response display to enable blind comparison
+    - Add `st.radio` or `st.selectbox` for user to rate/choose best response
+    - Securely log user preferences to `/data/results/user_feedback.json`
+    - Ensure all feedback logs include timestamp, model ID (hash), and input query
+    - Apply Microsoft Fluent UI CSS override via `fluent_theme.css`
+
+  success_criteria:
+    - Streamlit UI is functional with anonymized response cards
+    - User preference is captured and stored securely
+    - UX protocol saved under `docs/UXFindings.md`
+
+---
+
+# Week 3 – MVP 3: Statistical Analysis + Reporting
+week_3:
+  goal: >
+    Run full-scale evaluation and user study. Analyze results with statistical tests 
+    and produce polished documentation for submission.
+
+  agent_tasks:
+    - Run evaluations across all models and business contexts using batch configs
+    - Store responses and metadata in `results/` with evaluation metrics
+    - Implement `evaluation/stats.py` with:
+        - ANOVA, Welch’s t-test
+        - Confidence intervals
+        - Mean + stddev reports
+    - Generate plots with Plotly or matplotlib (bar charts, boxplots)
+    - Save charts to `/data/results/charts/`
+    - Finalize `docs/Methodology.md`, `EvaluationSummary.md`, `UXFindings.md`
+    - Add export to CSV from Streamlit app
+
+  success_criteria:
+    - All models evaluated across 3 industries
+    - At least 3 charts visualizing metrics
+    - Academic reports are complete and exportable

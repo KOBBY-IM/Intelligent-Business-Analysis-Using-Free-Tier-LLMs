@@ -8,7 +8,7 @@ Provides methods to load LLM, evaluation, and other configs from YAML files.
 from pathlib import Path
 from typing import Any, Dict, List
 
-from src.utils.common import load_yaml_file
+from utils.common import load_yaml_file
 
 
 class ConfigLoader:

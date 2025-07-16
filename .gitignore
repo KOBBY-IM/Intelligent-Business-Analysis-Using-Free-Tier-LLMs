@@ -1,114 +1,87 @@
-# Environment and secrets
+# Environment variables
 .env
-.venv/
-venv/
-env/
+.env.local
+.env.production
 
-# Data and results
-/data/
-data/evaluation_results/
-data/vector_store/
-data/*.csv
-data/*.json
-data/*.yaml
-data/*.yml
+# API keys and secrets
+secrets.toml
+.streamlit/secrets.toml
 
-# Python cache and compiled files
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-*.so
-*.egg
-*.egg-info/
-dist/
-build/
-eggs/
-parts/
-bin/
-var/
-sdist/
-develop-eggs/
-.installed.cfg
-lib/
-lib64/
+# Data files (except core datasets)
+data/
+!data/ground_truth_answers.json
+!data/evaluation_questions.yaml
+!data/shopping_trends.csv
+!data/Tesla_stock_data.csv
+!data/fixed_blind_responses.json
 
-# Jupyter and notebook checkpoints
-.ipynb_checkpoints/
-*.ipynb
+# User feedback and results
+data/user_feedback.json
+data/enhanced_user_feedback.json
+data/tester_registrations.json
+data/results/
+data/continuous_evaluation/
+data/backups/
+data/response_cache/
+data/test_results/
+data/reports/
 
-# Logs and temporary files
+# Logs
 logs/
 *.log
-*.tmp
-*.temp
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
 *.swp
 *.swo
 *~
 
-# OS files
+# OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
-desktop.ini
 
-# VSCode and editor settings
-.vscode/
-.cursor/
+# Temporary files
+*.tmp
+*.temp
+.cache/
 
+# Jupyter notebooks
+.ipynb_checkpoints/
+*.ipynb
 
-# Testing and coverage
-.coverage
+# Testing
 .pytest_cache/
-.tox/
+.coverage
 htmlcov/
-.coverage.*
-coverage.xml
-*.cover
-.hypothesis/
 
-# Documentation builds
-docs/_build/
-site/
-
-# Documentation and evaluation files
-docs/
-evaluation_*/
-EVALUATION_*.md
-COMMIT_*.md
-
-
-
-# API keys and sensitive files
-*.key
-*.pem
-*.p12
-*.pfx
-secrets.json
-config.json
-
-# Model files and large data
-*.model
-*.pkl
-*.pickle
-*.h5
-*.hdf5
-*.onnx
-*.pt
-*.pth
-*.bin
-
-# Temporary evaluation files
-eval_*/
-temp_*/
-tmp_*/
-
-# Backup files
-*.bak
-*.backup
-*.old 
+# Documentation
+docs/_build/ 

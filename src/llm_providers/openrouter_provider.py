@@ -18,15 +18,8 @@ logger = logging.getLogger(__name__)
 class OpenRouterProvider(BaseProvider):
     """OpenRouter LLM Provider with unified interface"""
 
-    def __init__(self):
-        super().__init__(
-            "OpenRouter",
-            [
-                "mistralai/mistral-7b-instruct",
-                "openrouter/cypher-alpha",
-                
-            ],
-        )
+    def __init__(self, model_list):
+        super().__init__("OpenRouter", model_list)
 
         self.api_key = os.getenv("OPENROUTER_API_KEY")
         self.base_url = "https://openrouter.ai/api/v1/chat/completions"

@@ -1,0 +1,105 @@
+# Rate Limiting Configuration for Continuous Evaluation
+# This file configures how the system handles API rate limits during continuous evaluation
+
+# Global rate limiting settings
+global:
+  # Buffer factor (0.8 = use 80% of limits to be safe)
+  rate_limit_buffer: 0.8
+  
+  # Minimum interval between evaluations (hours)
+  min_interval_hours: 2  # Updated for 2-hour intervals
+  
+  # Maximum retry attempts for rate limit violations
+  max_retry_attempts: 3
+  
+  # Wait time between retries (minutes)
+  retry_wait_minutes: 10
+
+# Provider-specific rate limits (requests per hour)
+providers:
+  groq:
+    requests_per_minute: 100
+    requests_per_hour: 1000
+    models_per_request: 3  # Number of models we use from this provider
+    priority: 1  # Higher priority = evaluated first
+    
+  gemini:
+    requests_per_minute: 60
+    requests_per_hour: 1500
+    models_per_request: 3
+    priority: 2
+    
+  huggingface:
+    requests_per_minute: 30
+    requests_per_hour: 500
+    models_per_request: 3
+    priority: 3
+
+# Evaluation workload configuration
+workload:
+  # Number of questions per domain
+  questions_per_domain: 10
+  
+  # Domains to evaluate
+  domains:
+    - retail
+    - finance
+    # - healthcare  # Uncomment when available
+  
+  # Total questions = questions_per_domain * len(domains)
+  # Total API calls per evaluation = total_questions * sum(models_per_request)
+  # With 2-hour intervals: 20 questions × 9 models = 180 calls every 2 hours = 90 calls/hour
+
+# Intelligent scheduling settings
+scheduling:
+  # Calculate safe intervals automatically
+  auto_calculate_intervals: true
+  
+  # Add random jitter to avoid synchronized requests
+  jitter_minutes: 15  # Reduced for more frequent runs
+  
+  # Spread evaluation across different times
+  time_spread_hours: 1  # Reduced for 2-hour intervals
+  
+  # Preferred evaluation windows (24-hour format) - 6 runs per day
+  preferred_windows:
+    - start: "00:00"
+      end: "02:00"
+    - start: "04:00"
+      end: "06:00"
+    - start: "08:00"
+      end: "10:00"
+    - start: "12:00"
+      end: "14:00"
+    - start: "16:00"
+      end: "18:00"
+    - start: "20:00"
+      end: "22:00"
+
+# Monitoring and alerting
+monitoring:
+  # Log rate limit violations
+  log_violations: true
+  
+  # Alert when rate limits are close to being exceeded
+  alert_threshold: 0.9  # Alert when 90% of limit is used
+  
+  # Track rate limit usage over time
+  track_usage: true
+  
+  # Save rate limit statistics
+  save_stats: true
+
+# Fallback strategies
+fallback:
+  # If a provider is rate limited, skip it for this run
+  skip_rate_limited_providers: true
+  
+  # Continue with available providers
+  continue_with_available: true
+  
+  # Retry failed providers in next run
+  retry_failed_next_run: true
+  
+  # Maximum consecutive failures before alerting
+  max_consecutive_failures: 3 

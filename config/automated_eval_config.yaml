@@ -1,0 +1,89 @@
+# Automated LLM Evaluator Configuration
+
+# Test Schedule
+test_schedule:
+  duration_minutes: 60  # Total test duration
+  interval_seconds: 120  # Time between tests (2 minutes)
+  max_concurrent_tests: 1  # Number of concurrent evaluations
+
+# RAG Configuration
+rag_settings:
+  max_context_length: 2000
+  chunk_size: 500
+  chunk_overlap: 50
+  max_results: 5
+  similarity_threshold: 0.7
+
+# Evaluation Metrics
+evaluation_metrics:
+  quality_score: true
+  relevance_score: true
+  coherence_score: true
+  accuracy_score: true
+  completeness_score: true
+  latency_tracking: true
+  token_count_tracking: true
+
+# Provider Settings
+providers:
+  groq:
+    enabled: true
+    models: ["mixtral-8x7b-32768", "llama2-70b-4096"]
+    max_retries: 3
+    timeout_seconds: 30
+  
+  gemini:
+    enabled: true
+    models: ["gemini-pro"]
+    max_retries: 3
+    timeout_seconds: 30
+  
+  huggingface:
+    enabled: true
+    models: ["microsoft/DialoGPT-large", "facebook/blenderbot-400M"]
+    max_retries: 3
+    timeout_seconds: 45
+  
+  openrouter:
+    enabled: true
+    models: ["openai/gpt-3.5-turbo", "anthropic/claude-instant-v1"]
+    max_retries: 3
+    timeout_seconds: 30
+
+# Dataset Configuration
+datasets:
+  auto_load_csv: true
+  auto_load_json: true
+  min_dataset_size: 10
+  preferred_formats: ["csv", "json", "xlsx"]
+
+# Logging
+logging:
+  level: "INFO"
+  save_intermediate_results: true
+  intermediate_save_interval: 5  # Save every N tests
+  detailed_logging: true
+
+# Output Settings
+output:
+  save_to_results_dir: true
+  save_to_evaluation_dir: true
+  generate_summary_report: true
+  export_formats: ["json", "csv"]
+  include_raw_responses: true
+  include_context_data: true
+
+# Error Handling
+error_handling:
+  continue_on_provider_error: true
+  retry_failed_tests: false
+  log_all_errors: true
+  max_consecutive_failures: 5
+
+# Performance Monitoring
+performance_monitoring:
+  track_memory_usage: true
+  track_cpu_usage: false
+  monitor_api_quotas: true
+  alert_on_high_latency: true
+  high_latency_threshold: 10.0  # seconds 

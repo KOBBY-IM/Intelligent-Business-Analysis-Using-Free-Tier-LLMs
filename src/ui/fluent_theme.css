@@ -1,30 +1,490 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Global Fluent Design System Styles */
 body, .stApp {
-    background-color: #f3f3f3 !important;
-    font-family: 'Segoe UI', 'Roboto', Arial, sans-serif !important;
+    background-color: #f3f2f1 !important;
+    font-family: 'Segoe UI', 'Roboto', 'Inter', sans-serif !important;
+    color: #201f1e !important;
+    font-size: 16px !important;
+    line-height: 1.5 !important;
 }
 
-/* Card-like containers */
-.stContainer, .stTabs, .stSidebar, .stButton, .stTextInput, .stSelectbox, .stRadio, .stDataFrame, .stMarkdown, .stHeader, .stSubheader {
+/* Typography */
+h1, h2, h3, h4, h5, h6, .stHeader, .stSubheader {
+    color: #201f1e !important;
+    font-family: 'Segoe UI', 'Roboto', 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    margin-bottom: 1rem !important;
+}
+
+p, div, span, .stMarkdown {
+    color: #201f1e !important;
+    font-family: 'Segoe UI', 'Roboto', 'Inter', sans-serif !important;
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+}
+
+/* Card-like containers with Fluent spacing */
+.stContainer, .stTabs, .stSidebar, .stButton, .stTextInput, .stSelectbox, .stRadio, .stDataFrame, .stMarkdown {
     border-radius: 12px !important;
     box-shadow: 0 2px 8px rgba(0,0,0,0.07), 0 1.5px 4px rgba(0,0,0,0.03) !important;
     background: #fff !important;
+    padding: 1rem !important;
+    margin-bottom: 1rem !important;
 }
 
 .stHeader, .stSubheader {
     background: transparent !important;
     box-shadow: none !important;
+    padding: 1rem 0 !important;
+    margin-bottom: 1rem !important;
 }
 
 .stButton>button, .stTextInput>div>input, .stSelectbox>div>div, .stRadio>div>div {
     border-radius: 8px !important;
     box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
-    font-family: 'Segoe UI', 'Roboto', Arial, sans-serif !important;
+    font-family: 'Segoe UI', 'Roboto', 'Inter', sans-serif !important;
+    font-size: 16px !important;
+    color: #201f1e !important;
+    padding: 0.75rem 1rem !important;
 }
 
 .stSidebar {
     background: #f8f8f8 !important;
     border-radius: 0 16px 16px 0 !important;
     box-shadow: 2px 0 8px rgba(0,0,0,0.04) !important;
+    padding: 1rem !important;
+    color: #201f1e !important;
+    font-family: 'Segoe UI', 'Roboto', 'Inter', sans-serif !important;
+    font-size: 16px !important;
 }
 
 /* Remove Streamlit default shadows where not needed */
@@ -32,12 +492,241 @@ body, .stApp {
     box-shadow: none !important;
 }
 
+/* Additional Fluent Design System styles */
+.stMarkdown {
+    padding: 1rem !important;
+}
+
+.stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4, .stMarkdown h5, .stMarkdown h6 {
+    color: #201f1e !important;
+    font-family: 'Segoe UI', 'Roboto', 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    margin-top: 1.5rem !important;
+    margin-bottom: 1rem !important;
+}
+
+.stMarkdown p {
+    color: #201f1e !important;
+    font-family: 'Segoe UI', 'Roboto', 'Inter', sans-serif !important;
+    font-size: 16px !important;
+    line-height: 1.6 !important;
+    margin-bottom: 1rem !important;
+}
+
+/* Section spacing */
+.stContainer > div {
+    padding: 1rem !important;
+}
+
+/* Button styling */
+.stButton > button {
+    background-color: #0078d4 !important;
+    color: white !important;
+    border: none !important;
+    font-weight: 500 !important;
+    transition: background-color 0.2s ease !important;
+}
+
+.stButton > button:hover {
+    background-color: #106ebe !important;
+}
+
+/* Action button styling for Quick Actions */
+.action-button {
+    background-color: #0078d4 !important;
+    color: white !important;
+    padding: 0.75rem 1.5rem !important;
+    font-size: 1rem !important;
+    border-radius: 8px !important;
+    border: none !important;
+    margin-right: 1rem !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    font-weight: 600 !important;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+}
+
+.action-button:hover {
+    background-color: #106ebe !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+}
+
+.action-button.secondary {
+    background-color: #323130 !important;
+    color: white !important;
+}
+
+.action-button.secondary:hover {
+    background-color: #484644 !important;
+}
+
+/* Quick Actions section button styling */
+.action-button-container .stButton > button {
+    background-color: #0078d4 !important;
+    color: white !important;
+    padding: 0.75rem 1.5rem !important;
+    font-size: 1rem !important;
+    border-radius: 8px !important;
+    border: none !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    font-weight: 600 !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    min-height: 3rem !important;
+    width: 100% !important;
+}
+
+.action-button-container .stButton > button:hover {
+    background-color: #106ebe !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+}
+
+/* Secondary button in quick actions (second column) */
+.action-button-container .stButton:nth-child(2) > button {
+    background-color: #323130 !important;
+}
+
+.action-button-container .stButton:nth-child(2) > button:hover {
+    background-color: #484644 !important;
+}
+
+/* Quick Actions section styling */
+.quick-actions-section {
+    background: white !important;
+    border-radius: 12px !important;
+    padding: 2rem !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07), 0 1.5px 4px rgba(0,0,0,0.03) !important;
+    margin: 1rem 0 !important;
+}
+
+.quick-actions-header {
+    color: #201f1e !important;
+    font-family: 'Segoe UI', 'Roboto', 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 1.5rem !important;
+    margin-bottom: 1.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+}
+
+.action-button-container {
+    display: flex !important;
+    gap: 1rem !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+}
+
+/* Icon styling in buttons */
+.action-button .icon {
+    font-size: 1.2rem !important;
+    display: inline-block !important;
+}
+
+.action-button .text {
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+}
+
+/* Thank you page styling */
+.thank-you-container {
+    background: #ffffff !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07), 0 1.5px 4px rgba(0,0,0,0.03) !important;
+    padding: 2rem !important;
+    margin: 1rem 0 !important;
+    text-align: center !important;
+}
+
+.thank-you-header {
+    color: #0078d4 !important;
+    font-size: 2.5rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 1rem !important;
+    font-family: 'Segoe UI', 'Roboto', 'Inter', sans-serif !important;
+}
+
+.thank-you-message {
+    color: #201f1e !important;
+    font-size: 1.2rem !important;
+    margin-bottom: 2rem !important;
+    font-family: 'Segoe UI', 'Roboto', 'Inter', sans-serif !important;
+}
+
+.completion-summary {
+    background: #f8f9fa !important;
+    border-radius: 8px !important;
+    padding: 1.5rem !important;
+    margin: 1rem 0 !important;
+    border-left: 4px solid #0078d4 !important;
+}
+
+.selection-card {
+    background: #f8f9fa !important;
+    padding: 1rem !important;
+    border-radius: 8px !important;
+    margin: 0.5rem 0 !important;
+    border-left: 4px solid #0078d4 !important;
+    color: #201f1e !important;
+    font-family: 'Segoe UI', 'Roboto', 'Inter', sans-serif !important;
+}
+
+.feedback-section {
+    background: #ffffff !important;
+    border: 1px solid #d2d0ce !important;
+    border-radius: 8px !important;
+    padding: 1.5rem !important;
+    margin: 1rem 0 !important;
+}
+
+.privacy-section {
+    background: #f3f2f1 !important;
+    border-radius: 8px !important;
+    padding: 1.5rem !important;
+    margin: 1rem 0 !important;
+    color: #201f1e !important;
+    font-family: 'Segoe UI', 'Roboto', 'Inter', sans-serif !important;
+}
+
+/* Input styling */
+.stTextInput > div > input, .stSelectbox > div > div {
+    border: 1px solid #d2d0ce !important;
+    background-color: white !important;
+    color: #201f1e !important;
+}
+
+.stTextInput > div > input:focus, .stSelectbox > div > div:focus {
+    border-color: #0078d4 !important;
+    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2) !important;
+}
+
 /* Responsive tweaks */
 @media (max-width: 600px) {
+    body, .stApp {
+        font-size: 14px !important;
+    }
+    
     .stHeader, .stSubheader {
         font-size: 1.2rem !important;
     }
+    
     .stContainer, .stTabs, .stSidebar {
         border-radius: 8px !important;
+        padding: 0.75rem !important;
+    }
+    
+    .stMarkdown {
+        padding: 0.75rem !important;
     }
 } 
+
+ 

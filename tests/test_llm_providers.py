@@ -39,13 +39,13 @@ class TestGroqProvider:
     @pytest.fixture
     def groq_provider(self, mock_env_vars):
         """Create a GroqProvider instance for testing."""
-        return GroqProvider()
+        return GroqProvider(model_list=["llama3-8b-8192"])
 
     def test_groq_provider_initialization(self, groq_provider):
         """Test GroqProvider initialization."""
         assert groq_provider is not None
         assert hasattr(groq_provider, "api_key")
-        assert hasattr(groq_provider, "model")
+        assert hasattr(groq_provider, "models")
 
     def test_groq_generate_response_success(self, groq_provider, mock_llm_response):
         """Test successful response generation from Groq."""
@@ -103,7 +103,7 @@ class TestGeminiProvider:
     @pytest.fixture
     def gemini_provider(self, mock_env_vars):
         """Create a GeminiProvider instance for testing."""
-        return GeminiProvider()
+        return GeminiProvider(model_list=["gemini-pro"])
 
     def test_gemini_provider_initialization(self, gemini_provider):
         """Test GeminiProvider initialization."""
@@ -158,7 +158,7 @@ class TestOpenRouterProvider:
     @pytest.fixture
     def openrouter_provider(self, mock_env_vars):
         """Create an OpenRouterProvider instance for testing."""
-        return OpenRouterProvider()
+        return OpenRouterProvider(model_list=["mistralai/mistral-7b-instruct"])
 
     def test_openrouter_provider_initialization(self, openrouter_provider):
         """Test OpenRouterProvider initialization."""
@@ -284,7 +284,11 @@ class TestProviderIntegration:
     @pytest.mark.asyncio
     async def test_provider_response_consistency(self, mock_env_vars):
         """Test that all providers return consistent response structures."""
-        providers = [GroqProvider(), GeminiProvider(), OpenRouterProvider()]
+        providers = [
+            GroqProvider(model_list=["llama3-8b-8192"]), 
+            GeminiProvider(model_list=["gemini-pro"]), 
+            OpenRouterProvider(model_list=["mistralai/mistral-7b-instruct"])
+        ]
 
         for provider in providers:
             with patch.object(provider, "generate_response") as mock_generate:
@@ -308,7 +312,11 @@ class TestProviderIntegration:
     @pytest.mark.asyncio
     async def test_provider_error_handling_consistency(self, mock_env_vars):
         """Test that all providers handle errors consistently."""
-        providers = [GroqProvider(), GeminiProvider(), OpenRouterProvider()]
+        providers = [
+            GroqProvider(model_list=["llama3-8b-8192"]), 
+            GeminiProvider(model_list=["gemini-pro"]), 
+            OpenRouterProvider(model_list=["mistralai/mistral-7b-instruct"])
+        ]
 
         for provider in providers:
             with patch.object(
@@ -319,7 +327,11 @@ class TestProviderIntegration:
 
     def test_provider_configuration_validation(self, mock_env_vars):
         """Test that all providers validate their configuration properly."""
-        providers = [GroqProvider(), GeminiProvider(), OpenRouterProvider()]
+        providers = [
+            GroqProvider(model_list=["llama3-8b-8192"]), 
+            GeminiProvider(model_list=["gemini-pro"]), 
+            OpenRouterProvider(model_list=["mistralai/mistral-7b-instruct"])
+        ]
 
         for provider in providers:
             # Test with valid configuration
@@ -339,7 +351,11 @@ class TestProviderPerformance:
         """Test response time performance of providers."""
         import time
 
-        providers = [GroqProvider(), GeminiProvider(), OpenRouterProvider()]
+        providers = [
+            GroqProvider(model_list=["llama3-8b-8192"]), 
+            GeminiProvider(model_list=["gemini-pro"]), 
+            OpenRouterProvider(model_list=["mistralai/mistral-7b-instruct"])
+        ]
 
         for provider in providers:
             with patch.object(provider, "generate_response") as mock_generate:
@@ -371,7 +387,11 @@ class TestProviderPerformance:
         # Create multiple provider instances
         providers = []
         for _ in range(10):
-            providers.extend([GroqProvider(), GeminiProvider(), OpenRouterProvider()])
+            providers.extend([
+                GroqProvider(model_list=["llama3-8b-8192"]), 
+                GeminiProvider(model_list=["gemini-pro"]), 
+                OpenRouterProvider(model_list=["mistralai/mistral-7b-instruct"])
+            ])
 
         final_memory = process.memory_info().rss
         memory_increase = final_memory - initial_memory
@@ -385,7 +405,11 @@ class TestProviderSecurity:
 
     def test_provider_input_sanitization(self, mock_env_vars, malicious_inputs):
         """Test that providers sanitize malicious inputs."""
-        providers = [GroqProvider(), GeminiProvider(), OpenRouterProvider()]
+        providers = [
+            GroqProvider(model_list=["llama3-8b-8192"]), 
+            GeminiProvider(model_list=["gemini-pro"]), 
+            OpenRouterProvider(model_list=["mistralai/mistral-7b-instruct"])
+        ]
 
         for provider in providers:
             for malicious_input in malicious_inputs:
@@ -396,7 +420,11 @@ class TestProviderSecurity:
 
     def test_provider_api_key_protection(self, mock_env_vars):
         """Test that API keys are properly protected."""
-        providers = [GroqProvider(), GeminiProvider(), OpenRouterProvider()]
+        providers = [
+            GroqProvider(model_list=["llama3-8b-8192"]), 
+            GeminiProvider(model_list=["gemini-pro"]), 
+            OpenRouterProvider(model_list=["mistralai/mistral-7b-instruct"])
+        ]
 
         for provider in providers:
             # API keys should not be exposed in string representations
@@ -407,7 +435,11 @@ class TestProviderSecurity:
 
     def test_provider_rate_limiting(self, mock_env_vars):
         """Test that providers implement rate limiting."""
-        providers = [GroqProvider(), GeminiProvider(), OpenRouterProvider()]
+        providers = [
+            GroqProvider(model_list=["llama3-8b-8192"]), 
+            GeminiProvider(model_list=["gemini-pro"]), 
+            OpenRouterProvider(model_list=["mistralai/mistral-7b-instruct"])
+        ]
 
         for provider in providers:
             # Providers should have rate limiting mechanisms

@@ -1,65 +1,105 @@
-import pathlib
+#!/usr/bin/env python3
+"""
+LLM Business Intelligence Research Platform
+Simple entry point to the comparative evaluation system.
+"""
 
 import streamlit as st
+import sys
+from pathlib import Path
 
-# Set page config
+# Add src to path for imports
+current_dir = Path(__file__).parent
+src_dir = current_dir.parent
+if str(src_dir) not in sys.path:
+    sys.path.insert(0, str(src_dir))
+
 st.set_page_config(
-    page_title="LLM Business Intelligence Dashboard",
-    page_icon="🤖",
-    layout="wide",
-    initial_sidebar_state="expanded",
+    page_title="LLM Business Intelligence Research",
+    page_icon="🧠",
+    layout="wide"
 )
 
-# Load Fluent UI CSS
-css_path = pathlib.Path(__file__).parent / "fluent_theme.css"
-if css_path.exists():
-    with open(css_path) as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+def main():
+    """Main application entry point."""
+    
+    st.title("🧠 LLM Business Intelligence Research")
+    st.subheader("Comparative Framework for Multi-Industry Decision Support")
+    
+    st.markdown("""
+    ## Welcome to the Research Platform
+    
+    This system evaluates **free-tier Large Language Models** across business domains:
+    - **Retail**: Customer behavior and sales analysis
+    - **Finance**: Market trends and investment insights
+    
+    ### Available Tools:
+    """)
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("""
+        **📊 Blind Evaluation**
+        - Compare LLM responses anonymously
+        - Rate model performance
+        - Contribute to research data
+        """)
+        if st.button("Start Blind Evaluation", key="blind_eval"):
+            st.switch_page("pages/1_Blind_Evaluation.py")
+    
+    with col2:
+        st.markdown("""
+        **📈 Metrics Dashboard**
+        - View performance statistics
+        - Compare model accuracy
+        - Analyze response quality
+        """)
+        if st.button("View Metrics", key="metrics"):
+            st.switch_page("pages/2_Metrics_Dashboard.py")
+    
+    with col3:
+        st.markdown("""
+        **📤 Export Results**
+        - Download evaluation data
+        - Access research findings
+        - Generate reports
+        """)
+        if st.button("Export Data", key="export"):
+            st.switch_page("pages/3_Export_Results.py")
+    
+    # Quick system status
+    st.markdown("---")
+    st.markdown("### System Status")
+    
+    try:
+        from llm_providers.provider_manager import ProviderManager
+        pm = ProviderManager()
+        all_providers = pm.get_all_providers()
+        total_models = sum(len(provider.models) for provider in all_providers.values())
+        st.success(f"✅ {len(all_providers)} providers, {total_models} models available")
+    except Exception as e:
+        st.error(f"⚠️ System check failed: {str(e)}")
+        
+    # Research info
+    with st.expander("ℹ️ About This Research"):
+        st.markdown("""
+        **Objective**: Compare the effectiveness of free-tier LLMs for business intelligence tasks.
+        
+        **Models Evaluated**:
+        - Groq (Mixtral, Llama)
+        - Google Gemini 
+        - OpenRouter models
+        
+        **Evaluation Criteria**:
+        - Accuracy and relevance
+        - Response coherence
+        - Processing speed
+        - Domain-specific insights
+        
+        **Ethics**: All data is anonymized. Participation is voluntary.
+        """)
 
-# Large header and subheader
-st.markdown(
-    """
-<div style='padding: 2rem 0 0.5rem 0;'>
-  <h1 style='font-size:2.8rem; font-weight:700; margin-bottom:0.2em;'>
-    LLM Business Intelligence Comparison Dashboard
-  </h1>
-  <h3 style='font-weight:400; color:#444; margin-top:0;'>
-    Compare, evaluate, and benchmark free-tier LLMs (Groq, Gemini, Hugging Face) for decision support in retail, finance, and healthcare. Explore metrics, visualize results, and export insights—all in a Fluent-inspired, user-friendly interface.
-  </h3>
-</div>
-""",
-    unsafe_allow_html=True,
-)
 
-# Sidebar
-st.sidebar.title("LLM BI Comparison")
-st.sidebar.markdown(
-    """
-**Navigation**
-- LLM Comparison
-- Metrics
-- Export Results
-"""
-)
-
-# Main tabs
-tabs = st.tabs(["LLM Comparison", "Metrics", "Export"])
-
-with tabs[0]:
-    st.header("LLM Comparison")
-    st.info(
-        "Compare responses from Groq, Gemini, and Hugging Face LLMs across industries."
-    )
-    st.write("(UI for blind evaluation and response display will go here.)")
-
-with tabs[1]:
-    st.header("Evaluation Metrics")
-    st.info(
-        "View relevance, accuracy, coherence, token count, and latency for each model."
-    )
-    st.write("(Metrics visualization and charts will go here.)")
-
-with tabs[2]:
-    st.header("Export Results")
-    st.info("Export evaluation results and user preferences as CSV or JSON.")
-    st.write("(Export/download buttons will go here.)")
+if __name__ == "__main__":
+    main() 

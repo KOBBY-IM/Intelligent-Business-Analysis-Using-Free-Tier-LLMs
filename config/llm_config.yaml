@@ -4,14 +4,10 @@ providers:
     models:
       - name: "llama3-8b-8192"
         description: "Original Llama 3 8B model"
-      - name: "llama-3.1-8b-instant"
-        description: "New Llama 3.1 8B Instant model"
     api_key_env: "GROQ_API_KEY"
   gemini:
     enabled: true
     models:
-      - name: "gemini-1.5-flash"
-        description: "Original Gemini 1.5 Flash model"
       - name: "gemma-3-12b-it"
         description: "New Gemma 3 12B Instruction Tuned model"
     api_key_env: "GOOGLE_API_KEY"
@@ -20,4 +16,6 @@ providers:
     models:
       - name: "mistralai/mistral-7b-instruct"
         description: "Original Mistral 7B Instruct model"
+      - name: "deepseek/deepseek-r1-0528-qwen3-8b"
+        description: "DeepSeek R1 Qwen3 8B model"
     api_key_env: "OPENROUTER_API_KEY" 

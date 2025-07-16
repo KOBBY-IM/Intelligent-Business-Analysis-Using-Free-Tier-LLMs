@@ -8,7 +8,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from src.utils.common import load_json_file
+from utils.common import load_json_file
 
 logger = logging.getLogger(__name__)
 

@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from rag.pipeline import RAGPipeline
 from rag.retrieval import DocumentRetriever
-from rag.vector_store import VectorStore
+from rag.vector_store import FAISSVectorStore
 
 
 class TestVectorStore:
@@ -24,7 +24,7 @@ class TestVectorStore:
     @pytest.fixture
     def vector_store(self, temp_data_dir):
         """Create a VectorStore instance for testing."""
-        return VectorStore(data_dir=temp_data_dir)
+        return FAISSVectorStore(data_dir=temp_data_dir)
 
     def test_vector_store_initialization(self, vector_store):
         """Test VectorStore initialization."""
@@ -68,7 +68,7 @@ class TestVectorStore:
         vector_store.save()
 
         # Create new instance and load
-        new_vector_store = VectorStore(data_dir=temp_data_dir)
+        new_vector_store = FAISSVectorStore(data_dir=temp_data_dir)
         new_vector_store.load()
 
         # Verify documents are loaded
@@ -448,12 +448,12 @@ class TestRAGIntegration:
     def test_vector_store_persistence(self, temp_data_dir, sample_documents):
         """Test vector store persistence across sessions."""
         # Create first vector store
-        vector_store1 = VectorStore(data_dir=temp_data_dir)
+        vector_store1 = FAISSVectorStore(data_dir=temp_data_dir)
         vector_store1.add_documents(sample_documents)
         vector_store1.save()
 
         # Create second vector store and load
-        vector_store2 = VectorStore(data_dir=temp_data_dir)
+        vector_store2 = FAISSVectorStore(data_dir=temp_data_dir)
         vector_store2.load()
 
         # Verify documents are loaded
@@ -495,7 +495,7 @@ class TestRAGPerformance:
         """Test vector store performance with large datasets."""
         import time
 
-        vector_store = VectorStore(data_dir=temp_data_dir)
+        vector_store = FAISSVectorStore(data_dir=temp_data_dir)
 
         # Create large dataset
         large_documents = [
@@ -571,7 +571,7 @@ class TestRAGSecurity:
 
     def test_input_sanitization(self, temp_data_dir, malicious_inputs):
         """Test that malicious inputs are properly sanitized."""
-        vector_store = VectorStore(data_dir=temp_data_dir)
+        vector_store = FAISSVectorStore(data_dir=temp_data_dir)
 
         for malicious_input in malicious_inputs:
             # Test that malicious input doesn't cause issues
@@ -584,7 +584,7 @@ class TestRAGSecurity:
 
     def test_file_path_validation(self, temp_data_dir):
         """Test that file paths are properly validated."""
-        vector_store = VectorStore(data_dir=temp_data_dir)
+        vector_store = FAISSVectorStore(data_dir=temp_data_dir)
 
         # Test with valid path
         valid_path = os.path.join(temp_data_dir, "test.pkl")
@@ -596,7 +596,7 @@ class TestRAGSecurity:
 
     def test_document_content_validation(self, temp_data_dir):
         """Test that document content is properly validated."""
-        vector_store = VectorStore(data_dir=temp_data_dir)
+        vector_store = FAISSVectorStore(data_dir=temp_data_dir)
 
         # Test valid document
         valid_doc = "This is a valid document about retail KPIs."
@@ -614,7 +614,7 @@ class TestRAGSecurity:
 
     def test_embedding_security(self, temp_data_dir):
         """Test that embeddings are generated securely."""
-        vector_store = VectorStore(data_dir=temp_data_dir)
+        vector_store = FAISSVectorStore(data_dir=temp_data_dir)
 
         # Test with normal text
         normal_text = "This is normal text for embedding."
