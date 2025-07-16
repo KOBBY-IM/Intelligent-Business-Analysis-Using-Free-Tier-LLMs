@@ -216,6 +216,8 @@ def main():
         show_evaluation_interface(api_keys_available, validator, secure_logger, feedback_logger)
     elif st.session_state.step == 2:
         show_completion_page(secure_logger)
+    elif st.session_state.step == 3:
+        show_study_information()
 
 def show_registration_page(validator: InputValidator, secure_logger: SecureLogger, rate_limiter: RateLimiter):
     """Display the registration and consent page."""
@@ -371,25 +373,29 @@ def show_evaluation_interface(api_keys_available: bool, validator: InputValidato
         st.markdown("---")
         
         if st.button("🏠 Home", use_container_width=True):
-            st.session_state.current_page = "home"
+            st.session_state.step = 0
+            st.rerun()
             
         if st.button("📊 Blind Evaluation", use_container_width=True, disabled=not api_keys_available):
-            st.session_state.current_page = "blind_eval"
+            st.session_state.step = 1
+            st.rerun()
             
         if st.button("📈 Progress & Stats", use_container_width=True):
-            st.session_state.current_page = "progress"
+            st.session_state.step = 2
+            st.rerun()
             
         if st.button("ℹ️ Study Information", use_container_width=True):
-            st.session_state.current_page = "info"
+            st.session_state.step = 3
+            st.rerun()
     
-    # Main content based on current page
-    if st.session_state.current_page == "home":
+    # Main content based on step
+    if st.session_state.step == 0:
         show_evaluation_home(api_keys_available)
-    elif st.session_state.current_page == "blind_eval":
+    elif st.session_state.step == 1:
         show_blind_evaluation_interface(validator, secure_logger, feedback_logger)
-    elif st.session_state.current_page == "progress":
+    elif st.session_state.step == 2:
         show_progress_interface(feedback_logger)
-    elif st.session_state.current_page == "info":
+    elif st.session_state.step == 3:
         show_study_information()
 
 def show_evaluation_home(api_keys_available: bool):
@@ -414,7 +420,7 @@ def show_evaluation_home(api_keys_available: bool):
         - Contribute valuable research data
         """)
         if st.button("🚀 Start Blind Evaluation", key="start_eval", type="primary"):
-            st.session_state.current_page = "blind_eval"
+            st.session_state.step = 1
             st.session_state.evaluation_started = True
             st.rerun()
     
@@ -426,7 +432,7 @@ def show_evaluation_home(api_keys_available: bool):
         - Review your contributions
         """)
         if st.button("📊 View Progress", key="view_progress"):
-            st.session_state.current_page = "progress"
+            st.session_state.step = 2
             st.rerun()
     
     # System status
