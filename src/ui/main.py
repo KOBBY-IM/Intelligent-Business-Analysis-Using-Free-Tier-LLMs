@@ -156,30 +156,46 @@ def show_home_page(api_keys_available):
     st.markdown("---")
     st.markdown("### System Status")
     
+    status_checks = []
+    
+    # Check fixed responses
     try:
-        # Check fixed responses
         from pathlib import Path
         fixed_responses_file = Path("data/fixed_blind_responses.json")
         if fixed_responses_file.exists():
-            st.success("✅ Fixed blind responses loaded")
+            status_checks.append(("✅", "Fixed blind responses loaded"))
         else:
-            st.error("❌ Fixed blind responses not found")
+            status_checks.append(("❌", "Fixed blind responses not found"))
+    except Exception as e:
+        status_checks.append(("⚠️", f"Could not check fixed responses: {str(e)}"))
             
-        # Check core modules
-        from src.config.config_loader import ConfigManager
-        config = ConfigManager()
-        st.success("✅ Configuration system loaded")
+    # Check core modules
+    try:
+        from src.config.config_loader import ConfigLoader
+        config = ConfigLoader()
+        status_checks.append(("✅", "Configuration system loaded"))
+    except Exception as e:
+        status_checks.append(("⚠️", f"Configuration system issue: {str(e)}"))
         
-        # Check data files
+    # Check data files
+    try:
         data_files = ["shopping_trends.csv", "Tesla_stock_data.csv"]
         for data_file in data_files:
             if Path(f"data/{data_file}").exists():
-                st.success(f"✅ {data_file} available")
+                status_checks.append(("✅", f"{data_file} available"))
             else:
-                st.warning(f"⚠️ {data_file} missing")
-                
+                status_checks.append(("⚠️", f"{data_file} missing"))
     except Exception as e:
-        st.error(f"❌ System check failed: {str(e)}")
+        status_checks.append(("⚠️", f"Could not check data files: {str(e)}"))
+        
+    # Display all status checks
+    for icon, message in status_checks:
+        if icon == "✅":
+            st.success(f"{icon} {message}")
+        elif icon == "❌":
+            st.error(f"{icon} {message}")
+        else:
+            st.warning(f"{icon} {message}")
 
 def show_blind_evaluation():
     """Display the blind evaluation page."""
