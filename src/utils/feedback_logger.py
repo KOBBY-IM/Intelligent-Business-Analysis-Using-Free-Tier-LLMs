@@ -24,28 +24,63 @@ class FeedbackLogger:
             results_dir: Directory to store feedback results
         """
         self.results_dir = Path(results_dir)
-        self.results_dir.mkdir(parents=True, exist_ok=True)
-        self.feedback_file = self.results_dir / "user_feedback.json"
+        self.use_file_storage = True
+        
+        try:
+            # Try to create directory and test write access
+            self.results_dir.mkdir(parents=True, exist_ok=True)
+            self.feedback_file = self.results_dir / "user_feedback.json"
+            
+            # Test write access
+            test_file = self.results_dir / "test_write.tmp"
+            test_file.write_text("test")
+            test_file.unlink()
+            
+        except (PermissionError, OSError, IOError):
+            # Fallback to in-memory storage for Streamlit Cloud
+            self.use_file_storage = False
+            self.feedback_file = None
+            print("File system is read-only, using session state for feedback storage")
         
     def _load_existing_feedback(self) -> List[Dict[str, Any]]:
-        """Load existing feedback data from JSON file."""
-        if self.feedback_file.exists():
+        """Load existing feedback data from JSON file or session state."""
+        if self.use_file_storage and self.feedback_file and self.feedback_file.exists():
             try:
                 with open(self.feedback_file, 'r', encoding='utf-8') as f:
                     return json.load(f)
             except (json.JSONDecodeError, FileNotFoundError):
                 return []
+        else:
+            # Use session state on Streamlit Cloud
+            import streamlit as st
+            if 'feedback_data' not in st.session_state:
+                st.session_state.feedback_data = []
+            return st.session_state.feedback_data
         return []
     
     def _save_feedback(self, feedback_data: List[Dict[str, Any]]) -> bool:
-        """Save feedback data to JSON file with error handling."""
-        try:
-            with open(self.feedback_file, 'w', encoding='utf-8') as f:
-                json.dump(feedback_data, f, indent=2, ensure_ascii=False)
-            return True
-        except Exception as e:
-            print(f"Error saving feedback: {e}")
-            return False
+        """Save feedback data to JSON file or session state with error handling."""
+        if self.use_file_storage and self.feedback_file:
+            try:
+                with open(self.feedback_file, 'w', encoding='utf-8') as f:
+                    json.dump(feedback_data, f, indent=2, ensure_ascii=False)
+                return True
+            except Exception as e:
+                print(f"Error saving feedback to file: {e}")
+                # Fallback to session state
+                self.use_file_storage = False
+        
+        if not self.use_file_storage:
+            try:
+                # Save to session state on Streamlit Cloud
+                import streamlit as st
+                st.session_state.feedback_data = feedback_data
+                return True
+            except Exception as e:
+                print(f"Error saving feedback to session state: {e}")
+                return False
+        
+        return False
     
     def log_industry_feedback(
         self,

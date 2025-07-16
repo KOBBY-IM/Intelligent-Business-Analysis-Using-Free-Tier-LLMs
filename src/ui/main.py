@@ -195,7 +195,15 @@ def main():
     initialize_session_state()
     validator = InputValidator()
     rate_limiter = RateLimiter()
-    secure_logger = SecureLogger("logs/secure.log")
+    
+    # Initialize secure logger with fallback for Streamlit Cloud
+    try:
+        secure_logger = SecureLogger("logs/secure.log")
+    except Exception as e:
+        # Fallback to console-only logging on Streamlit Cloud
+        secure_logger = SecureLogger(None)
+        st.warning(f"Using console logging due to file system restrictions: {e}")
+    
     feedback_logger = FeedbackLogger()
     
     # Check for API keys

@@ -54,22 +54,39 @@ class SecureLogger:
     
     def _setup_logging(self):
         """Set up logging configuration"""
-        if self.log_file:
-            log_path = Path(self.log_file)
-            log_path.parent.mkdir(parents=True, exist_ok=True)
+        # On Streamlit Cloud, we can't write to files, so only use console logging
+        try:
+            if self.log_file:
+                log_path = Path(self.log_file)
+                log_path.parent.mkdir(parents=True, exist_ok=True)
+                
+                # Configure file handler - fix variable name bug
+                file_handler = logging.FileHandler(self.log_file)
+                file_handler.setLevel(logging.INFO)
+                
+                # Configure formatter
+                formatter = logging.Formatter(
+                    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+                )
+                file_handler.setFormatter(formatter)
+                
+                # Add handler to logger
+                logger.addHandler(file_handler)
+        except (PermissionError, OSError, IOError) as e:
+            # Streamlit Cloud has read-only filesystem, fallback to console logging
+            console_handler = logging.StreamHandler()
+            console_handler.setLevel(logging.INFO)
             
-            # Configure file handler
-            file_handler = logging.FileHandler(log_file)
-            file_handler.setLevel(logging.INFO)
-            
-            # Configure formatter
             formatter = logging.Formatter(
                 '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
             )
-            file_handler.setFormatter(formatter)
+            console_handler.setFormatter(formatter)
             
-            # Add handler to logger
-            logger.addHandler(file_handler)
+            # Add console handler instead
+            logger.addHandler(console_handler)
+            
+            # Log the fallback
+            logger.info(f"Unable to write to log file {self.log_file}, using console logging: {e}")
     
     def sanitize_text(self, text: str) -> str:
         """
