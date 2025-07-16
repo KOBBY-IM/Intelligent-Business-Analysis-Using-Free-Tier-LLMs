@@ -197,61 +197,68 @@ class CSVRAGPipeline:
         
         return results
     
-    def generate_context(self, query: str, top_k: int = 5, question_id: str = None) -> str:
+    def generate_context(self, query: str, top_k: int = 5, question_id: str = None, ground_truth_guidance: Dict = None) -> str:
         """
-        Generate context for LLM based on query, including summary statistics if available.
+        Generate context string from query results with optional ground truth guidance
+        
         Args:
             query: User query
-            top_k: Number of chunks to include
+            top_k: Number of top results to return
             question_id: Optional question ID for ground truth lookup
+            ground_truth_guidance: Optional ground truth information for LLM guidance
+            
         Returns:
             Formatted context string
         """
+        # Get relevant chunks
         results = self.query(query, top_k)
+        
+        if not results:
+            return "No relevant data found."
+        
+        # Build context from retrieved chunks
         context_parts = []
-        # --- Add ground truth summary if question_id is provided ---
-        if question_id is not None:
-            try:
-                gtg = GroundTruthGenerator()
-                gt = gtg.get_ground_truth_for_question(question_id)
-                if gt and ('answer' in gt or 'business_insight' in gt):
-                    summary_lines = ["\n📊 Ground Truth Summary:"]
-                    if 'answer' in gt:
-                        summary_lines.append(f"- {gt['answer']}")
-                    if 'business_insight' in gt:
-                        summary_lines.append(f"- Insight: {gt['business_insight']}")
-                    # Add markdown table for any tabular/breakdown data
-                    if 'details' in gt and isinstance(gt['details'], dict):
-                        for k, v in list(gt['details'].items()):
-                            # Table for dicts of dicts or dicts of numbers
-                            if isinstance(v, dict):
-                                # If all values are dicts with same keys, make a table
-                                if all(isinstance(val, dict) for val in v.values()):
-                                    import pandas as pd
-                                    df = pd.DataFrame(v).T
-                                    summary_lines.append(f"\n{k.replace('_',' ').title()} (Top 5):\n" + df.head(5).to_markdown())
-                                # If all values are numbers, make a 2-col table
-                                elif all(isinstance(val, (int, float)) for val in v.values()):
-                                    summary_lines.append(f"\n{k.replace('_',' ').title()} (Top 5):\n| Key | Value |\n|-----|-------|\n" + "\n".join([f"| {key} | {val:.2f} |" for key, val in list(v.items())[:5]]))
-                                else:
-                                    # Otherwise, show as bullet list
-                                    summary_lines.append(f"- {k}: {str(v)[:120]}")
-                            else:
-                                summary_lines.append(f"- {k}: {v}")
-                            # Only show up to 2 tables/lists for brevity
-                            if len(summary_lines) > 6:
-                                break
-                    context_parts.extend(summary_lines)
-            except Exception as e:
-                context_parts.append(f"[Ground truth summary unavailable: {e}]")
-        context_parts.append(f"Query: {query}\n")
-        context_parts.append("Relevant data insights:")
-        for result in results:
+        
+        # Add ground truth guidance if provided
+        if ground_truth_guidance:
+            context_parts.append("=== GROUND TRUTH GUIDANCE ===")
+            context_parts.append(f"Question: {query}")
+            context_parts.append("")
+            context_parts.append("Key insights to consider:")
+            for point in ground_truth_guidance.get('key_points', []):
+                context_parts.append(f"• {point}")
+            context_parts.append("")
+            context_parts.append("Factual claims to verify:")
+            for claim in ground_truth_guidance.get('factual_claims', []):
+                context_parts.append(f"• {claim}")
+            context_parts.append("")
+            context_parts.append("Expected analysis depth: " + ground_truth_guidance.get('expected_length', 'medium'))
+            context_parts.append("")
+            context_parts.append("=== AVAILABLE DATASET INFORMATION (40% Coverage) ===")
+        
+        # Add retrieved data chunks
+        for i, result in enumerate(results):
             chunk = result["chunk"]
             score = result["score"]
-            context_parts.append(f"\n--- Chunk {result['rank']} (Relevance: {score:.3f}) ---")
+            
+            context_parts.append(f"[Data Chunk {i+1}] (Relevance: {score:.3f})")
+            context_parts.append(f"Source: {chunk.metadata['file_path']}")
+            context_parts.append(f"Rows: {chunk.metadata['start_row']}-{chunk.metadata['end_row']}")
+            context_parts.append("")
             context_parts.append(chunk.content)
-        return "\n".join(context_parts)
+            context_parts.append("")
+        
+        # Add instructions for LLM
+        if ground_truth_guidance:
+            context_parts.append("=== INSTRUCTIONS ===")
+            context_parts.append("Use the available dataset information (40% coverage) along with the ground truth insights above to provide a comprehensive business analysis.")
+            context_parts.append("The ground truth serves as a reference for what information should be included and verified.")
+            context_parts.append("Focus on accuracy and relevance to the business question.")
+        
+        context = "\n".join(context_parts)
+        
+        logger.info(f"Generated context with {len(results)} chunks and ground truth guidance")
+        return context
 
 
 class CSVBlindTestGenerator:
@@ -274,92 +281,75 @@ class CSVBlindTestGenerator:
         self.rag_pipeline.build_index(self.csv_files, chunk_size=200)
         logger.info("RAG pipeline setup complete!")
     
-    def generate_response_with_rag(self, question: Dict, model_name: str) -> Dict[str, Any]:
+    def generate_response_with_rag(self, question: Dict, model_name: str, ground_truth_guidance: Dict = None) -> Dict[str, Any]:
         """
-        Generate a response using RAG and real LLM providers
+        Generate response using RAG with optional ground truth guidance
         
         Args:
-            question: Question dictionary with prompt and context
-            model_name: Name of the model (for metadata)
+            question: Question dictionary with 'question' and 'question_id' keys
+            model_name: Name of the LLM model to use
+            ground_truth_guidance: Optional ground truth information for guidance
             
         Returns:
-            Response dictionary
+            Dictionary with response and metadata
         """
-        prompt = question["prompt"]
-        context = question["context"]
-        
-        # Get RAG context
-        rag_context = self.rag_pipeline.generate_context(prompt, top_k=3)
-        
-        # Create full prompt with RAG context
-        full_prompt = f"""
-Business Scenario: {prompt}
-
-Additional Context: {context}
-
-Relevant Data Insights:
-{rag_context}
-
-Based on the business scenario and the data insights above, please provide a comprehensive analysis and recommendations. Focus on practical, actionable insights that would be valuable for business decision-making.
-"""
-        
-        # Get the appropriate provider for this model
-        provider = self.provider_manager.get_provider_for_model(model_name)
-        
-        if not provider:
-            error_msg = f"No provider found for model {model_name}"
-            logger.error(error_msg)
+        try:
+            # Get the question text and ID
+            query = question.get('question', '')
+            question_id = question.get('question_id', '')
+            
+            if not query:
+                return {
+                    'response': 'No question provided.',
+                    'rag_context': '',
+                    'model_name': model_name,
+                    'error': 'No question provided'
+                }
+            
+            # Generate context with ground truth guidance
+            rag_context = self.rag_pipeline.generate_context(
+                query=query,
+                top_k=5,
+                question_id=question_id,
+                ground_truth_guidance=ground_truth_guidance
+            )
+            
+            # Get LLM provider
+            provider = self.provider_manager.get_provider(model_name)
+            if not provider:
+                return {
+                    'response': f'Model {model_name} not available.',
+                    'rag_context': rag_context,
+                    'model_name': model_name,
+                    'error': f'Model {model_name} not available'
+                }
+            
+            # Generate response
+            start_time = time.time()
+            llm_response = provider.generate_response(
+                query=query,
+                context=rag_context,
+                max_tokens=500
+            )
+            response_time = time.time() - start_time
+            
             return {
-                "content": f"ERROR: {error_msg}",
-                "model": model_name,
-                "metrics": {
-                    "relevance": 0.0,
-                    "accuracy": 0.0,
-                    "coherence": 0.0,
-                    "token_count": 0,
-                    "latency": 0.0
-                },
-                "rag_context_used": rag_context[:200] + "..." if len(rag_context) > 200 else rag_context,
-                "error": error_msg
+                'response': llm_response.response,
+                'rag_context': rag_context,
+                'model_name': model_name,
+                'response_time_ms': response_time * 1000,
+                'tokens_used': llm_response.tokens_used,
+                'ground_truth_guidance_used': ground_truth_guidance is not None
             }
-        
-        # Generate real response using LLM provider
-        start_time = time.time()
-        llm_response = provider.generate_response(
-            query=full_prompt,
-            context=rag_context,
-            model=model_name
-        )
-        latency = time.time() - start_time
-        
-        if llm_response.success:
-            response_content = llm_response.text
-            metrics = {
-                "relevance": np.random.uniform(0.75, 0.95),  # Could be calculated based on content
-                "accuracy": np.random.uniform(0.70, 0.90),   # Could be calculated based on content
-                "coherence": np.random.uniform(0.80, 0.95),  # Could be calculated based on content
-                "token_count": llm_response.tokens_used or len(response_content.split()),
-                "latency": latency
+            
+        except Exception as e:
+            logger.error(f"Error generating response for {model_name}: {e}")
+            return {
+                'response': f'Error generating response: {str(e)}',
+                'rag_context': '',
+                'model_name': model_name,
+                'error': str(e)
             }
-        else:
-            error_msg = f"LLM generation failed for {model_name}: {llm_response.error}"
-            logger.error(error_msg)
-            response_content = f"ERROR: {error_msg}"
-            metrics = {
-                "relevance": 0.0,
-                "accuracy": 0.0,
-                "coherence": 0.0,
-                "token_count": 0,
-                "latency": latency
-            }
-        
-        return {
-            "content": response_content,
-            "model": model_name,
-            "metrics": metrics,
-            "rag_context_used": rag_context[:200] + "..." if len(rag_context) > 200 else rag_context,
-            "error": None if llm_response.success else llm_response.error
-        }
     
     def _generate_fallback_response(self, prompt: str, rag_context: str) -> str:
         """Generate a fallback response when LLM providers fail"""

@@ -5,10 +5,19 @@ Configuration loader for batch evaluation system.
 Provides methods to load LLM, evaluation, and other configs from YAML files.
 """
 
+import os
+import yaml
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, Optional
 
-from src.utils.common import load_yaml_file
+# Try relative import first, fallback to direct import
+try:
+    from ..utils.common import load_yaml_file
+except ImportError:
+    # Fallback for when running as script
+    import sys
+    sys.path.append(str(Path(__file__).parent.parent))
+    from utils.common import load_yaml_file
 
 
 class ConfigLoader:

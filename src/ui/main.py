@@ -450,7 +450,10 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
         import random
         from pathlib import Path
         
-        fixed_responses_file = Path("data/fixed_blind_responses.json")
+        # Try to load responses with ground truth guidance first, fallback to original
+        fixed_responses_file = Path("data/fixed_blind_responses_with_guidance.json")
+        if not fixed_responses_file.exists():
+            fixed_responses_file = Path("data/fixed_blind_responses.json")
         
         if not fixed_responses_file.exists():
             st.error("❌ Evaluation data not available!")
