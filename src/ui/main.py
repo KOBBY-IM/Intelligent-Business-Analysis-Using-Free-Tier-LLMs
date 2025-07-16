@@ -7,6 +7,7 @@ Simple entry point to the comparative evaluation system.
 import streamlit as st
 import sys
 from pathlib import Path
+from datetime import datetime
 
 # Add src to path for imports
 current_dir = Path(__file__).parent
@@ -202,23 +203,14 @@ def show_blind_evaluation():
     st.title("📊 Blind Evaluation")
     
     try:
-        # Import and run the blind evaluation
-        import sys
+        # Load fixed responses directly without complex imports
+        import json
+        import random
         from pathlib import Path
-        
-        # Add src to path
-        project_root = Path(__file__).parent.parent.parent
-        sys.path.insert(0, str(project_root / "src"))
-        
-        # Import the blind evaluation components
-        from src.rag.blind_test_generator import BlindTestGenerator
-        from src.utils.question_sampler import QuestionSampler
-        from src.llm_providers.provider_manager import ProviderManager
         
         st.info("Loading blind evaluation interface...")
         
         # Load fixed responses
-        import json
         fixed_responses_file = Path("data/fixed_blind_responses.json")
         
         if not fixed_responses_file.exists():
@@ -237,57 +229,118 @@ def show_blind_evaluation():
         # Select a random question
         questions = list(fixed_data['responses'].keys())
         if "selected_question" not in st.session_state:
-            import random
             st.session_state.selected_question = random.choice(questions)
             
         question_data = fixed_data['responses'][st.session_state.selected_question]
         
+        # Display question info
         st.markdown(f"**Question:** {question_data['question']}")
         st.markdown(f"**Domain:** {question_data['domain'].title()}")
         
-        # Show responses
-        responses = question_data['llm_responses']
+        # Show RAG context in expander
+        with st.expander("📋 Business Context (Click to view)"):
+            st.text(question_data['rag_context'])
         
+        # Show responses in randomized order
+        responses = question_data['llm_responses']
+        provider_names = list(responses.keys())
+        
+        # Randomize provider order for blind evaluation
+        if "provider_order" not in st.session_state:
+            st.session_state.provider_order = provider_names.copy()
+            random.shuffle(st.session_state.provider_order)
+        
+        # Display responses
         col1, col2, col3 = st.columns(3)
         
-        with col1:
-            st.markdown("#### Response A")
-            st.write(responses['groq']['response'])
+        response_labels = ["Response A", "Response B", "Response C"]
+        
+        for i, (col, label) in enumerate(zip([col1, col2, col3], response_labels)):
+            provider = st.session_state.provider_order[i]
+            response_data = responses[provider]
             
-        with col2:
-            st.markdown("#### Response B") 
-            st.write(responses['gemini']['response'])
-            
-        with col3:
-            st.markdown("#### Response C")
-            st.write(responses['openrouter']['response'])
-            
+            with col:
+                st.markdown(f"#### {label}")
+                st.write(response_data['response'])
+                
+                # Show metadata in small text
+                st.caption(f"Length: {len(response_data['response'])} chars | "
+                          f"Tokens: {response_data['metadata'].get('token_count', 'N/A')}")
+        
         # Rating interface
         st.markdown("---")
         st.markdown("### Rate the Responses")
         
         rating = st.radio(
             "Which response is most helpful for business decision-making?",
-            ["Response A", "Response B", "Response C"],
+            response_labels,
             key="response_rating"
         )
         
-        if st.button("Submit Rating", key="submit_rating"):
-            st.success(f"✅ Thank you! You selected {rating}")
-            # Here you could save the rating to a file
-            
-            # Load next question
-            st.session_state.selected_question = random.choice(questions)
-            st.rerun()
-            
-        if st.button("Next Question", key="next_question"):
-            import random
-            st.session_state.selected_question = random.choice(questions)
-            st.rerun()
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            if st.button("Submit Rating", key="submit_rating", type="primary"):
+                # Map response to actual provider
+                selected_index = response_labels.index(rating)
+                actual_provider = st.session_state.provider_order[selected_index]
+                
+                st.success(f"✅ Thank you! You selected {rating}")
+                st.info(f"You chose the response from: **{actual_provider.title()}**")
+                
+                # Save rating (could be expanded to save to file)
+                if "ratings" not in st.session_state:
+                    st.session_state.ratings = []
+                
+                st.session_state.ratings.append({
+                    "question_id": st.session_state.selected_question,
+                    "selected_response": rating,
+                    "actual_provider": actual_provider,
+                    "timestamp": str(datetime.now())
+                })
+                
+                st.write(f"Total evaluations completed: {len(st.session_state.ratings)}")
+                
+        with col2:
+            if st.button("Next Question", key="next_question"):
+                # Load next question and randomize provider order
+                st.session_state.selected_question = random.choice(questions)
+                st.session_state.provider_order = provider_names.copy()
+                random.shuffle(st.session_state.provider_order)
+                st.rerun()
+                
+        with col3:
+            if st.button("Show Statistics", key="show_stats"):
+                if "ratings" in st.session_state and st.session_state.ratings:
+                    st.subheader("Your Evaluation Statistics")
+                    
+                    # Count provider preferences
+                    provider_counts = {}
+                    for rating in st.session_state.ratings:
+                        provider = rating["actual_provider"]
+                        provider_counts[provider] = provider_counts.get(provider, 0) + 1
+                    
+                    for provider, count in provider_counts.items():
+                        percentage = (count / len(st.session_state.ratings)) * 100
+                        st.write(f"**{provider.title()}**: {count} selections ({percentage:.1f}%)")
+                else:
+                    st.info("Complete some evaluations first to see statistics!")
             
     except Exception as e:
         st.error(f"❌ Error loading blind evaluation: {str(e)}")
-        st.info("Please check that all required files and modules are available.")
+        st.info("The evaluation system is using a simplified approach to avoid import issues.")
+        
+        # Show debug information
+        with st.expander("Debug Information"):
+            st.write(f"Error details: {str(e)}")
+            st.write(f"Error type: {type(e).__name__}")
+            
+            # Check file existence
+            import os
+            st.write(f"Current directory: {os.getcwd()}")
+            st.write(f"Data directory exists: {os.path.exists('data')}")
+            if os.path.exists('data'):
+                st.write(f"Data files: {os.listdir('data')}")
 
 def show_metrics_dashboard():
     """Display the metrics dashboard."""
