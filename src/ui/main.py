@@ -499,7 +499,9 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
             st.session_state.response_order = provider_names
         
         responses = question_data['llm_responses']
-        response_labels = ["Response A", "Response B", "Response C"]
+        # Dynamically create response labels based on available responses
+        response_labels = [chr(65 + i) for i in range(len(st.session_state.response_order))]  # A, B, C, D, etc.
+        response_labels = [f"Response {label}" for label in response_labels]
         
         # Display responses
         st.markdown("### Compare the Responses")
