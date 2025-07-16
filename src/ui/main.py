@@ -454,20 +454,41 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
         with open(fixed_responses_file, 'r') as f:
             fixed_data = json.load(f)
             
-        st.success(f"✅ Loaded {len(fixed_data['responses'])} evaluation questions")
+        # Initialize user's question set if not already done
+        if 'user_question_set' not in st.session_state:
+            # Separate questions by domain
+            retail_questions = [q for q in fixed_data['responses'].keys() if q.startswith('retail_')]
+            finance_questions = [q for q in fixed_data['responses'].keys() if q.startswith('finance_')]
+            
+            # Randomly select 5 from each domain
+            selected_retail = random.sample(retail_questions, min(5, len(retail_questions)))
+            selected_finance = random.sample(finance_questions, min(5, len(finance_questions)))
+            
+            st.session_state.user_question_set = selected_retail + selected_finance
+            st.session_state.total_questions = len(st.session_state.user_question_set)
+            
+            # Log the question selection
+            secure_logger.log_event(
+                event_type='question_set_assigned',
+                message=f"Assigned {len(selected_retail)} retail + {len(selected_finance)} finance questions",
+                data={
+                    'retail_questions': selected_retail,
+                    'finance_questions': selected_finance,
+                    'total_questions': st.session_state.total_questions
+                }
+            )
         
         # Progress tracking
         if 'evaluation_progress' not in st.session_state:
             st.session_state.evaluation_progress = []
         
-        # Question selection
-        questions = list(fixed_data['responses'].keys())
+        # Question selection from user's assigned set
         completed_questions = set(q['question_id'] for q in st.session_state.evaluation_progress)
-        remaining_questions = [q for q in questions if q not in completed_questions]
+        remaining_questions = [q for q in st.session_state.user_question_set if q not in completed_questions]
         
         if not remaining_questions:
             st.success("🎉 **Evaluation Complete!**")
-            st.info("You have completed all evaluation questions. Thank you for your participation!")
+            st.info("You have completed all 10 evaluation questions. Thank you for your participation!")
             if st.button("🏆 View Final Summary", type="primary"):
                 st.session_state.step = 2
                 st.rerun()
@@ -480,8 +501,8 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
         question_data = fixed_data['responses'][st.session_state.current_question_id]
         
         # Progress indicator
-        progress = len(st.session_state.evaluation_progress) / len(questions)
-        st.progress(progress, text=f"Progress: {len(st.session_state.evaluation_progress)}/{len(questions)} questions completed")
+        progress = len(st.session_state.evaluation_progress) / st.session_state.total_questions
+        st.progress(progress, text=f"Progress: {len(st.session_state.evaluation_progress)}/{st.session_state.total_questions} questions completed")
         
         # Question display
         st.markdown(f"**Question:** {question_data['question']}")
@@ -501,49 +522,57 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
         responses = question_data['llm_responses']
         # Dynamically create response labels based on available responses
         response_labels = [chr(65 + i) for i in range(len(st.session_state.response_order))]  # A, B, C, D, etc.
-        response_labels = [f"Response {label}" for label in response_labels]
         
         # Display responses
         st.markdown("### Compare the Responses")
-        st.markdown("*Please read all responses carefully before making your selection.*")
+        st.markdown("*Please read all responses carefully and rank them from best to worst.*")
         
         for i, label in enumerate(response_labels):
             provider = st.session_state.response_order[i]
             response_data = responses[provider]
             
             with st.container():
-                st.markdown(f"#### {label}")
+                st.markdown(f"#### Response {label}")
                 st.markdown(f"*{response_data['response']}*")
                 st.caption(f"Length: {len(response_data['response'])} characters")
                 st.markdown("---")
         
-        # Evaluation form
-        st.markdown("### Your Evaluation")
+        # Ranking interface
+        st.markdown("### Your Ranking")
+        st.markdown("*Please rank the responses from 1 (best) to 4 (worst).*")
         
-        with st.form("evaluation_form"):
-            selected_response = st.radio(
-                "Which response is most helpful for business decision-making?",
-                response_labels,
-                index=None
-            )
+        with st.form("ranking_form"):
+            # Create ranking sliders for each response
+            rankings = {}
+            for i, label in enumerate(response_labels):
+                rankings[label] = st.slider(
+                    f"Rank Response {label}",
+                    min_value=1, 
+                    max_value=4, 
+                    value=i+1,
+                    key=f"rank_{label}",
+                    help=f"1 = Best, 4 = Worst"
+                )
             
             confidence = st.slider(
-                "How confident are you in your selection?",
+                "How confident are you in your ranking?",
                 min_value=1, max_value=5, value=3,
                 help="1 = Not confident, 5 = Very confident"
             )
             
             comment = st.text_area(
-                "Optional: Please explain your choice",
+                "Optional: Please explain your ranking",
                 max_chars=500,
-                help="Why did you choose this response? What made it better than the others?"
+                help="Why did you rank the responses this way? What criteria did you use?"
             )
             
-            submitted = st.form_submit_button("Submit Evaluation", type="primary")
+            submitted = st.form_submit_button("Submit Ranking", type="primary")
             
             if submitted:
-                if not selected_response:
-                    st.error("❌ Please select a response before submitting.")
+                # Validate ranking (ensure all ranks are unique)
+                rank_values = list(rankings.values())
+                if len(set(rank_values)) != len(rank_values):
+                    st.error("❌ Please ensure each response has a unique rank (1-4).")
                 else:
                     # Validate comment
                     comment_valid, comment_error = validator.validate_comment(comment)
@@ -551,16 +580,25 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
                         st.error(f"❌ {comment_error}")
                         return
                     
-                    # Map selection to actual provider
-                    selected_index = response_labels.index(selected_response)
-                    actual_provider = st.session_state.response_order[selected_index]
+                    # Find the best ranked response (rank 1)
+                    best_rank = 1
+                    best_response_label = None
+                    for label, rank in rankings.items():
+                        if rank == best_rank:
+                            best_response_label = label
+                            break
                     
-                    # Save evaluation
+                    # Map to actual provider
+                    best_index = response_labels.index(best_response_label)
+                    actual_provider = st.session_state.response_order[best_index]
+                    
+                    # Save evaluation with ranking data
                     evaluation_entry = {
                         'question_id': st.session_state.current_question_id,
                         'question': question_data['question'],
                         'domain': question_data['domain'],
-                        'selected_response': selected_response,
+                        'rankings': rankings,
+                        'best_response': best_response_label,
                         'actual_provider': actual_provider,
                         'confidence': confidence,
                         'comment': validator.sanitize_text(comment),
@@ -575,7 +613,7 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
                     secure_logger.log_evaluation_submission(
                         industry=question_data['domain'],
                         question_id=st.session_state.current_question_id,
-                        selected_response=selected_response,
+                        selected_response=best_response_label,
                         has_comment=bool(comment.strip())
                     )
                     
@@ -586,7 +624,7 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
                     )
                     
                     # Show feedback
-                    st.success(f"✅ Thank you! You selected **{selected_response}**")
+                    st.success(f"✅ Thank you! You ranked **Response {best_response_label}** as best")
                     st.info(f"💡 This response was generated by: **{actual_provider.title()}**")
                     
                     # Clear current question to load next
@@ -611,96 +649,208 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
         # Navigation buttons
         col1, col2 = st.columns(2)
         with col1:
-            if len(remaining_questions) > 1 and st.button("⏭️ Skip Question", help="Skip to a different question"):
-                # Clear current question
-                if 'current_question_id' in st.session_state:
-                    del st.session_state.current_question_id
-                if 'response_order' in st.session_state:
-                    del st.session_state.response_order
+            if st.button("🏠 Back to Home", use_container_width=True):
+                st.session_state.step = 0
                 st.rerun()
         
         with col2:
-            if len(st.session_state.evaluation_progress) > 0:
-                if st.button("📊 View Progress", help="See your evaluation statistics"):
-                    st.session_state.current_page = "progress"
-                    st.rerun()
-                    
+            if st.button("📊 View Progress", use_container_width=True):
+                st.session_state.step = 2
+                st.rerun()
+                
     except Exception as e:
-        st.error(f"❌ Error loading evaluation interface: {str(e)}")
-        secure_logger.log_event('evaluation_error', f'Error in evaluation interface: {str(e)}')
+        st.error(f"❌ An error occurred: {str(e)}")
+        st.info("Please refresh the page and try again.")
+        secure_logger.log_security_event(
+            event_type="evaluation_error",
+            severity="MEDIUM",
+            details={"error": str(e), "user_email": st.session_state.get('tester_email', 'unknown')}
+        )
 
 def show_progress_interface(feedback_logger: FeedbackLogger):
-    """Display user progress and statistics."""
+    """Show evaluation progress and statistics."""
     
-    st.title("📈 Your Evaluation Progress")
+    st.title("📊 Evaluation Progress")
     
-    if 'evaluation_progress' not in st.session_state or not st.session_state.evaluation_progress:
-        st.info("🚀 **Ready to Start!**")
-        st.markdown("You haven't completed any evaluations yet. Click the button below to begin.")
-        if st.button("🚀 Start Evaluation", type="primary"):
-            st.session_state.current_page = "blind_eval"
-            st.rerun()
-        return
+    # Get user's evaluation data
+    if 'evaluation_progress' not in st.session_state:
+        st.session_state.evaluation_progress = []
     
     evaluations = st.session_state.evaluation_progress
     
-    # Overall progress
-    st.subheader("📊 Overall Progress")
+    if not evaluations:
+        st.info("No evaluations completed yet. Start your evaluation to see progress here!")
+        if st.button("🚀 Start Evaluation", type="primary"):
+            st.session_state.step = 1
+            st.rerun()
+        return
     
+    # Calculate statistics
+    total_questions = st.session_state.get('total_questions', 10)
+    completed = len(evaluations)
+    remaining = total_questions - completed
+    progress_percent = (completed / total_questions) * 100
+    
+    # Progress overview
     col1, col2, col3 = st.columns(3)
-    
     with col1:
-        st.metric("Evaluations Completed", len(evaluations))
+        st.metric("Questions Completed", completed, f"{remaining} remaining")
+    with col2:
+        st.metric("Progress", f"{progress_percent:.1f}%")
+    with col3:
+        st.metric("Best Provider", get_most_selected_provider(evaluations))
+    
+    # Progress bar
+    st.progress(progress_percent / 100, text=f"Overall Progress: {completed}/{total_questions}")
+    
+    # Domain breakdown
+    retail_evaluations = [e for e in evaluations if e['domain'] == 'retail']
+    finance_evaluations = [e for e in evaluations if e['domain'] == 'finance']
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        retail_progress = len(retail_evaluations) / 5 * 100
+        st.metric("🛍️ Retail", f"{len(retail_evaluations)}/5", f"{retail_progress:.1f}%")
+        st.progress(retail_progress / 100)
     
     with col2:
-        domains = [eval['domain'] for eval in evaluations]
-        unique_domains = len(set(domains))
-        st.metric("Domains Evaluated", unique_domains)
+        finance_progress = len(finance_evaluations) / 5 * 100
+        st.metric("💰 Finance", f"{len(finance_evaluations)}/5", f"{finance_progress:.1f}%")
+        st.progress(finance_progress / 100)
+    
+    # Ranking statistics
+    st.markdown("### 📈 Ranking Statistics")
+    
+    # Provider preference analysis
+    provider_rankings = analyze_provider_rankings(evaluations)
+    
+    if provider_rankings:
+        st.markdown("#### Provider Performance (Based on Rankings)")
+        
+        # Create a simple bar chart
+        providers = list(provider_rankings.keys())
+        avg_ranks = list(provider_rankings.values())
+        
+        # Lower rank is better, so invert for display
+        performance_scores = [4 - rank for rank in avg_ranks]
+        
+        # Display as metrics
+        cols = st.columns(len(providers))
+        for i, (provider, score) in enumerate(zip(providers, performance_scores)):
+            with cols[i]:
+                st.metric(
+                    provider.title(), 
+                    f"{score:.1f}/3", 
+                    f"Avg Rank: {avg_ranks[i]:.1f}"
+                )
+    
+    # Recent evaluations
+    st.markdown("### 📝 Recent Evaluations")
+    
+    for i, eval_data in enumerate(evaluations[-5:], 1):  # Show last 5
+        with st.expander(f"Question {i}: {eval_data['question'][:50]}...", expanded=False):
+            col1, col2 = st.columns(2)
+            with col1:
+                st.write(f"**Domain:** {eval_data['domain'].title()}")
+                st.write(f"**Best Response:** {eval_data['best_response']}")
+                st.write(f"**Provider:** {eval_data['actual_provider'].title()}")
+            with col2:
+                st.write(f"**Confidence:** {eval_data['confidence']}/5")
+                if eval_data.get('comment'):
+                    st.write(f"**Comment:** {eval_data['comment'][:100]}...")
+    
+    # Navigation
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("🏠 Back to Home", use_container_width=True):
+            st.session_state.step = 0
+            st.rerun()
+    
+    with col2:
+        if remaining > 0:
+            if st.button("🚀 Continue Evaluation", type="primary", use_container_width=True):
+                st.session_state.step = 1
+                st.rerun()
+        else:
+            if st.button("🏆 View Final Results", type="primary", use_container_width=True):
+                st.session_state.step = 2
+                st.rerun()
     
     with col3:
-        avg_confidence = sum(eval['confidence'] for eval in evaluations) / len(evaluations)
-        st.metric("Average Confidence", f"{avg_confidence:.1f}/5")
-    
-    # Provider selection statistics
-    st.subheader("🤖 Your LLM Preferences")
+        if st.button("📊 Export Data", use_container_width=True):
+            export_evaluation_data(evaluations)
+
+def get_most_selected_provider(evaluations):
+    """Get the most frequently selected provider."""
+    if not evaluations:
+        return "None"
     
     provider_counts = {}
-    for eval in evaluations:
-        provider = eval['actual_provider']
+    for eval_data in evaluations:
+        provider = eval_data['actual_provider']
         provider_counts[provider] = provider_counts.get(provider, 0) + 1
     
     if provider_counts:
-        total_selections = sum(provider_counts.values())
+        return max(provider_counts, key=provider_counts.get).title()
+    return "None"
+
+def analyze_provider_rankings(evaluations):
+    """Analyze provider performance based on rankings."""
+    if not evaluations:
+        return {}
+    
+    provider_ranks = {}
+    provider_counts = {}
+    
+    for eval_data in evaluations:
+        if 'rankings' not in eval_data:
+            continue
+            
+        rankings = eval_data['rankings']
+        response_order = eval_data.get('response_order', [])
         
-        for provider, count in provider_counts.items():
-            percentage = (count / total_selections) * 100
-            st.write(f"**{provider.title()}**: {count} selections ({percentage:.1f}%)")
+        # Map response labels to providers
+        for label, rank in rankings.items():
+            if label in ['A', 'B', 'C', 'D']:
+                try:
+                    provider_index = ord(label) - ord('A')
+                    if provider_index < len(response_order):
+                        provider = response_order[provider_index]
+                        if provider not in provider_ranks:
+                            provider_ranks[provider] = []
+                            provider_counts[provider] = 0
+                        provider_ranks[provider].append(rank)
+                        provider_counts[provider] += 1
+                except (IndexError, KeyError):
+                    continue
     
-    # Domain breakdown
-    st.subheader("🏢 Domain Breakdown")
+    # Calculate average ranks
+    avg_ranks = {}
+    for provider, ranks in provider_ranks.items():
+        if ranks:
+            avg_ranks[provider] = sum(ranks) / len(ranks)
     
-    domain_counts = {}
-    for eval in evaluations:
-        domain = eval['domain']
-        domain_counts[domain] = domain_counts.get(domain, 0) + 1
+    return avg_ranks
+
+def export_evaluation_data(evaluations):
+    """Export evaluation data to JSON."""
+    import json
+    from datetime import datetime
     
-    for domain, count in domain_counts.items():
-        st.write(f"**{domain.title()}**: {count} evaluations")
+    export_data = {
+        'export_timestamp': datetime.now().isoformat(),
+        'user_email': st.session_state.get('tester_email', 'unknown'),
+        'session_id': st.session_state.get('session_id', 'unknown'),
+        'evaluations': evaluations
+    }
     
-    # Recent evaluations
-    st.subheader("📝 Recent Evaluations")
-    
-    # Show last 5 evaluations
-    recent_evals = evaluations[-5:] if len(evaluations) > 5 else evaluations
-    
-    for eval in reversed(recent_evals):
-        with st.expander(f"{eval['domain'].title()}: {eval['question'][:60]}..."):
-            st.write(f"**Selected:** {eval['selected_response']}")
-            st.write(f"**Actual Provider:** {eval['actual_provider'].title()}")
-            st.write(f"**Confidence:** {eval['confidence']}/5")
-            if eval['comment']:
-                st.write(f"**Comment:** {eval['comment']}")
-            st.write(f"**Time:** {eval['timestamp']}")
+    # Create download button
+    st.download_button(
+        label="📥 Download Evaluation Data",
+        data=json.dumps(export_data, indent=2),
+        file_name=f"evaluation_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+        mime="application/json"
+    )
 
 def show_study_information():
     """Display detailed study information."""
