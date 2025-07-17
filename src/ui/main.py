@@ -450,8 +450,10 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
         import random
         from pathlib import Path
         
-        # Try to load responses with ground truth guidance first, fallback to original
-        fixed_responses_file = Path("data/fixed_blind_responses_with_guidance.json")
+        # Try to load enhanced responses first, then fallback to others
+        fixed_responses_file = Path("data/enhanced_blind_responses.json")
+        if not fixed_responses_file.exists():
+            fixed_responses_file = Path("data/fixed_blind_responses_with_guidance.json")
         if not fixed_responses_file.exists():
             fixed_responses_file = Path("data/fixed_blind_responses.json")
         
@@ -463,6 +465,21 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
         with open(fixed_responses_file, 'r') as f:
             fixed_data = json.load(f)
             
+        # Check if this is enhanced data
+        is_enhanced = "enhanced_blind_responses.json" in str(fixed_responses_file)
+        if is_enhanced and "improvements" in fixed_data:
+            st.success("🚀 **Enhanced RAG System Active!**")
+            with st.expander("📊 Enhanced Features", expanded=False):
+                st.markdown("### RAG Improvements")
+                for feature, description in fixed_data["improvements"].items():
+                    st.markdown(f"• **{feature.replace('_', ' ').title()}**: {description}")
+                st.markdown("### Benefits")
+                st.markdown("• **Better Coverage**: 8 chunks instead of 5")
+                st.markdown("• **Higher Quality**: 150 rows per chunk instead of 200")
+                st.markdown("• **Dynamic Guidance**: Query-based analysis focus")
+                st.markdown("• **Enhanced Analysis**: Outlier detection and trend analysis")
+                st.markdown("• **Cross-Chunk Patterns**: Pattern detection across chunks")
+        
         # Initialize user's question set if not already done
         if 'user_question_set' not in st.session_state:
             # Separate questions by domain
@@ -562,7 +579,12 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
         # Display responses in a 2x2 grid
         st.markdown("### Compare the Responses")
         st.markdown("*Please read all responses carefully and rank them from best to worst.*")
-        st.markdown("**Note:** LLM responses use 40% dataset coverage + ground truth guidance for decision making.")
+        
+        # Show enhanced coverage information
+        if is_enhanced:
+            st.info("🚀 **Enhanced RAG System**: LLM responses use 8 chunks (vs 5), 150 rows per chunk (vs 200), dynamic guidance, and cross-chunk analysis.")
+        else:
+            st.markdown("**Note:** LLM responses use 40% dataset coverage + ground truth guidance for decision making.")
         
         # Add some spacing
         st.markdown("")
@@ -574,25 +596,46 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
             with col1:
                 provider = st.session_state.response_order[0]
                 response_data = responses[provider]
+                
+                # Get enhanced metadata if available
+                metadata = response_data.get('metadata', {})
+                chunks_used = metadata.get('chunks_used', 5)
+                enhanced_coverage = metadata.get('enhanced_coverage', False)
+                
                 st.markdown("""
                 <div style="border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; margin: 10px 0; background-color: #f8f9fa;">
                 <h4 style="color: #1f77b4; margin-bottom: 10px;">📄 Response A</h4>
                 """, unsafe_allow_html=True)
                 st.markdown(f"*{response_data['response']}*")
                 st.caption(f"📏 Length: {len(response_data['response'])} characters")
-                st.caption(f"🔍 40% Dataset + Ground Truth Guidance | Provider: {provider.title()}")
+                
+                if enhanced_coverage:
+                    st.caption(f"🚀 Enhanced: {chunks_used} chunks + Dynamic Guidance | Provider: {provider.title()}")
+                else:
+                    st.caption(f"🔍 40% Dataset + Ground Truth Guidance | Provider: {provider.title()}")
+                    
                 st.markdown("</div>", unsafe_allow_html=True)
             
             with col2:
                 provider = st.session_state.response_order[1]
                 response_data = responses[provider]
+                
+                metadata = response_data.get('metadata', {})
+                chunks_used = metadata.get('chunks_used', 5)
+                enhanced_coverage = metadata.get('enhanced_coverage', False)
+                
                 st.markdown("""
                 <div style="border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; margin: 10px 0; background-color: #f8f9fa;">
                 <h4 style="color: #ff7f0e; margin-bottom: 10px;">📄 Response B</h4>
                 """, unsafe_allow_html=True)
                 st.markdown(f"*{response_data['response']}*")
                 st.caption(f"📏 Length: {len(response_data['response'])} characters")
-                st.caption(f"🔍 40% Dataset + Ground Truth Guidance | Provider: {provider.title()}")
+                
+                if enhanced_coverage:
+                    st.caption(f"🚀 Enhanced: {chunks_used} chunks + Dynamic Guidance | Provider: {provider.title()}")
+                else:
+                    st.caption(f"🔍 40% Dataset + Ground Truth Guidance | Provider: {provider.title()}")
+                    
                 st.markdown("</div>", unsafe_allow_html=True)
             
             # Second row: Response C and D
@@ -600,25 +643,45 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
             with col3:
                 provider = st.session_state.response_order[2]
                 response_data = responses[provider]
+                
+                metadata = response_data.get('metadata', {})
+                chunks_used = metadata.get('chunks_used', 5)
+                enhanced_coverage = metadata.get('enhanced_coverage', False)
+                
                 st.markdown("""
                 <div style="border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; margin: 10px 0; background-color: #f8f9fa;">
                 <h4 style="color: #2ca02c; margin-bottom: 10px;">📄 Response C</h4>
                 """, unsafe_allow_html=True)
                 st.markdown(f"*{response_data['response']}*")
                 st.caption(f"📏 Length: {len(response_data['response'])} characters")
-                st.caption(f"🔍 40% Dataset + Ground Truth Guidance | Provider: {provider.title()}")
+                
+                if enhanced_coverage:
+                    st.caption(f"🚀 Enhanced: {chunks_used} chunks + Dynamic Guidance | Provider: {provider.title()}")
+                else:
+                    st.caption(f"🔍 40% Dataset + Ground Truth Guidance | Provider: {provider.title()}")
+                    
                 st.markdown("</div>", unsafe_allow_html=True)
             
             with col4:
                 provider = st.session_state.response_order[3]
                 response_data = responses[provider]
+                
+                metadata = response_data.get('metadata', {})
+                chunks_used = metadata.get('chunks_used', 5)
+                enhanced_coverage = metadata.get('enhanced_coverage', False)
+                
                 st.markdown("""
                 <div style="border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; margin: 10px 0; background-color: #f8f9fa;">
                 <h4 style="color: #d62728; margin-bottom: 10px;">📄 Response D</h4>
                 """, unsafe_allow_html=True)
                 st.markdown(f"*{response_data['response']}*")
                 st.caption(f"📏 Length: {len(response_data['response'])} characters")
-                st.caption(f"🔍 40% Dataset + Ground Truth Guidance | Provider: {provider.title()}")
+                
+                if enhanced_coverage:
+                    st.caption(f"🚀 Enhanced: {chunks_used} chunks + Dynamic Guidance | Provider: {provider.title()}")
+                else:
+                    st.caption(f"🔍 40% Dataset + Ground Truth Guidance | Provider: {provider.title()}")
+                    
                 st.markdown("</div>", unsafe_allow_html=True)
         else:
             # Fallback for different numbers of responses

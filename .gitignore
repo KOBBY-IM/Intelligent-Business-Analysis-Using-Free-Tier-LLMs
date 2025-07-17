@@ -14,6 +14,7 @@ data/
 !data/shopping_trends.csv
 !data/Tesla_stock_data.csv
 !data/fixed_blind_responses.json
+!data/enhanced_blind_responses.json
 
 # User feedback and results
 data/user_feedback.json

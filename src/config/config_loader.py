@@ -8,7 +8,7 @@ Provides methods to load LLM, evaluation, and other configs from YAML files.
 import os
 import yaml
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 # Try relative import first, fallback to direct import
 try:
