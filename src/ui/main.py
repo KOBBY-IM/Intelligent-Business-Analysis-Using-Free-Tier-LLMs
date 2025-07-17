@@ -535,35 +535,55 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
         st.markdown(f"**Domain:** {question_data['domain'].title()}")
         
         # Show ground truth comparison
-        with st.expander("🏆 Ground Truth Reference (100% Dataset Access - Used for LLM Guidance)", expanded=False):
-            st.markdown("### Ground Truth Analysis")
-            st.markdown(f"**Answer:** {question_data.get('ground_truth', 'Ground truth not available')}")
-            st.info("💡 **Note:** This ground truth information is provided to LLMs as guidance for their analysis, along with 40% dataset access.")
+        with st.expander("🎯 Ground Truth & Business Context", expanded=False):
+            # Load actual ground truth from ground_truth_answers.json
+            try:
+                ground_truth_file = Path("data/ground_truth_answers.json")
+                if ground_truth_file.exists():
+                    with open(ground_truth_file, 'r') as f:
+                        ground_truth_data = json.load(f)
+                    
+                    domain = question_data['domain']
+                    question_id = st.session_state.current_question_id
+                    
+                    if domain in ground_truth_data and question_id in ground_truth_data[domain]:
+                        gt_answer = ground_truth_data[domain][question_id]
+                        
+                        st.markdown("### 🎯 Expert Ground Truth Answer")
+                        st.success(f"**Answer:** {gt_answer['answer']}")
+                        
+                        # Show key points if available
+                        if 'key_points' in gt_answer and gt_answer['key_points']:
+                            st.markdown("**🔑 Key Data Points:**")
+                            for point in gt_answer['key_points']:
+                                st.markdown(f"• {point}")
+                        
+                        # Show factual claims if available  
+                        if 'factual_claims' in gt_answer and gt_answer['factual_claims']:
+                            st.markdown("**📊 Factual Claims to Verify:**")
+                            for claim in gt_answer['factual_claims']:
+                                st.markdown(f"• {claim}")
+                        
+                        st.info("💡 **Note:** This expert analysis uses 100% of the dataset and serves as the gold standard for comparison.")
+                        
+                    else:
+                        st.warning("No ground truth available for this question.")
+                else:
+                    st.warning("Ground truth file not found.")
+            except Exception as e:
+                st.error(f"Error loading ground truth: {e}")
+                st.warning("Ground truth information temporarily unavailable.")
             
-            # Ground truth stats
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Dataset Coverage", "100%", "Full access")
-            with col2:
-                st.metric("Data Sources", question_data.get('data_source', 'Unknown'), "Complete dataset")
-            with col3:
-                st.metric("Analysis Type", question_data.get('analysis_type', 'Unknown'), "Comprehensive")
-            
-            # Key insights
-            if 'key_points' in question_data:
-                st.markdown("**Key Insights (Provided to LLMs):**")
-                for point in question_data['key_points']:
-                    st.markdown(f"• {point}")
-            
-            # Factual claims
-            if 'factual_claims' in question_data:
-                st.markdown("**Factual Claims (For LLM Verification):**")
-                for claim in question_data['factual_claims']:
-                    st.markdown(f"• {claim}")
-        
-        # Show business context
-        with st.expander("📋 Business Context (Click to view)", expanded=False):
-            st.text(question_data['rag_context'])
+            # Show business scenario context (not RAG chunks)
+            st.markdown("### 📋 Business Scenario Context")
+            if 'context' in question_data and question_data['context']:
+                st.markdown(f"**Industry:** {question_data['domain'].title()}")
+                st.markdown(f"**Business Question:** {question_data['question']}")
+                st.markdown("**What to evaluate:** Look for specific data points, actionable insights, and business relevance in the AI responses below.")
+            else:
+                st.markdown(f"**Industry:** {question_data['domain'].title()}")
+                st.markdown(f"**Analysis Focus:** {question_data['question']}")
+                st.markdown("**Dataset:** AI responses use 8 chunks of curated business data with statistical analysis.")
         
         # Randomize responses for blind evaluation
         if 'response_order' not in st.session_state:
@@ -589,8 +609,9 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
         # Add some spacing
         st.markdown("")
         
-        # Create a 2x2 grid for responses
-        if len(response_labels) == 4:
+        # Create a responsive grid for responses
+        if len(response_labels) >= 4:
+            # 2x2 grid for 4+ responses
             # First row: Response A and B
             col1, col2 = st.columns(2)
             with col1:
@@ -610,9 +631,9 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
                 st.caption(f"📏 Length: {len(response_data['response'])} characters")
                 
                 if enhanced_coverage:
-                    st.caption(f"🚀 Enhanced: {chunks_used} chunks + Dynamic Guidance | Provider: {provider.title()}")
+                    st.caption(f"🚀 Enhanced: {chunks_used} chunks + Dynamic Guidance")
                 else:
-                    st.caption(f"🔍 40% Dataset + Ground Truth Guidance | Provider: {provider.title()}")
+                    st.caption(f"🔍 40% Dataset + Ground Truth Guidance")
                     
                 st.markdown("</div>", unsafe_allow_html=True)
             
@@ -632,13 +653,13 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
                 st.caption(f"📏 Length: {len(response_data['response'])} characters")
                 
                 if enhanced_coverage:
-                    st.caption(f"🚀 Enhanced: {chunks_used} chunks + Dynamic Guidance | Provider: {provider.title()}")
+                    st.caption(f"🚀 Enhanced: {chunks_used} chunks + Dynamic Guidance")
                 else:
-                    st.caption(f"🔍 40% Dataset + Ground Truth Guidance | Provider: {provider.title()}")
+                    st.caption(f"🔍 40% Dataset + Ground Truth Guidance")
                     
                 st.markdown("</div>", unsafe_allow_html=True)
             
-            # Second row: Response C and D
+            # Second row: Response C and D (if available)
             col3, col4 = st.columns(2)
             with col3:
                 provider = st.session_state.response_order[2]
@@ -656,49 +677,95 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
                 st.caption(f"📏 Length: {len(response_data['response'])} characters")
                 
                 if enhanced_coverage:
-                    st.caption(f"🚀 Enhanced: {chunks_used} chunks + Dynamic Guidance | Provider: {provider.title()}")
+                    st.caption(f"🚀 Enhanced: {chunks_used} chunks + Dynamic Guidance")
                 else:
-                    st.caption(f"🔍 40% Dataset + Ground Truth Guidance | Provider: {provider.title()}")
+                    st.caption(f"🔍 40% Dataset + Ground Truth Guidance")
                     
                 st.markdown("</div>", unsafe_allow_html=True)
             
             with col4:
-                provider = st.session_state.response_order[3]
-                response_data = responses[provider]
-                
-                metadata = response_data.get('metadata', {})
-                chunks_used = metadata.get('chunks_used', 5)
-                enhanced_coverage = metadata.get('enhanced_coverage', False)
-                
-                st.markdown("""
-                <div style="border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; margin: 10px 0; background-color: #f8f9fa;">
-                <h4 style="color: #d62728; margin-bottom: 10px;">📄 Response D</h4>
-                """, unsafe_allow_html=True)
-                st.markdown(f"*{response_data['response']}*")
-                st.caption(f"📏 Length: {len(response_data['response'])} characters")
-                
-                if enhanced_coverage:
-                    st.caption(f"🚀 Enhanced: {chunks_used} chunks + Dynamic Guidance | Provider: {provider.title()}")
-                else:
-                    st.caption(f"🔍 40% Dataset + Ground Truth Guidance | Provider: {provider.title()}")
+                if len(response_labels) > 3:
+                    provider = st.session_state.response_order[3]
+                    response_data = responses[provider]
                     
-                st.markdown("</div>", unsafe_allow_html=True)
-        else:
-            # Fallback for different numbers of responses
-            for i, label in enumerate(response_labels):
-                provider = st.session_state.response_order[i]
-                response_data = responses[provider]
-                
-                with st.container():
-                    st.markdown(f"#### Response {label}")
+                    metadata = response_data.get('metadata', {})
+                    chunks_used = metadata.get('chunks_used', 5)
+                    enhanced_coverage = metadata.get('enhanced_coverage', False)
+                    
+                    st.markdown("""
+                    <div style="border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; margin: 10px 0; background-color: #f8f9fa;">
+                    <h4 style="color: #d62728; margin-bottom: 10px;">📄 Response D</h4>
+                    """, unsafe_allow_html=True)
                     st.markdown(f"*{response_data['response']}*")
-                    st.caption(f"Length: {len(response_data['response'])} characters")
-                    st.caption(f"40% Dataset + Ground Truth Guidance | Provider: {provider.title()}")
-                    st.markdown("---")
+                    st.caption(f"📏 Length: {len(response_data['response'])} characters")
+                    
+                    if enhanced_coverage:
+                        st.caption(f"🚀 Enhanced: {chunks_used} chunks + Dynamic Guidance")
+                    else:
+                        st.caption(f"🔍 40% Dataset + Ground Truth Guidance")
+                        
+                    st.markdown("</div>", unsafe_allow_html=True)
+                else:
+                    st.empty()  # Placeholder for missing 4th response
+                    
+        else:
+            # Handle 3 responses with 2+1 layout
+            col1, col2 = st.columns(2)
+            colors = ["#1f77b4", "#ff7f0e", "#2ca02c"]
+            
+            # First row: Response A and B
+            for i, col in enumerate([col1, col2]):
+                if i < len(response_labels):
+                    with col:
+                        provider = st.session_state.response_order[i]
+                        response_data = responses[provider]
+                        
+                        metadata = response_data.get('metadata', {})
+                        chunks_used = metadata.get('chunks_used', 5)
+                        enhanced_coverage = metadata.get('enhanced_coverage', False)
+                        
+                        st.markdown(f"""
+                        <div style="border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; margin: 10px 0; background-color: #f8f9fa;">
+                        <h4 style="color: {colors[i]}; margin-bottom: 10px;">📄 Response {response_labels[i]}</h4>
+                        """, unsafe_allow_html=True)
+                        st.markdown(f"*{response_data['response']}*")
+                        st.caption(f"📏 Length: {len(response_data['response'])} characters")
+                        
+                        if enhanced_coverage:
+                            st.caption(f"🚀 Enhanced: {chunks_used} chunks + Dynamic Guidance")
+                        else:
+                            st.caption(f"🔍 40% Dataset + Ground Truth Guidance")
+                            
+                        st.markdown("</div>", unsafe_allow_html=True)
+            
+            # Second row: Response C (centered)
+            if len(response_labels) == 3:
+                col_left, col_center, col_right = st.columns([1, 2, 1])
+                with col_center:
+                    provider = st.session_state.response_order[2]
+                    response_data = responses[provider]
+                    
+                    metadata = response_data.get('metadata', {})
+                    chunks_used = metadata.get('chunks_used', 5)
+                    enhanced_coverage = metadata.get('enhanced_coverage', False)
+                    
+                    st.markdown(f"""
+                    <div style="border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; margin: 10px 0; background-color: #f8f9fa;">
+                    <h4 style="color: {colors[2]}; margin-bottom: 10px;">📄 Response C</h4>
+                    """, unsafe_allow_html=True)
+                    st.markdown(f"*{response_data['response']}*")
+                    st.caption(f"📏 Length: {len(response_data['response'])} characters")
+                    
+                    if enhanced_coverage:
+                        st.caption(f"🚀 Enhanced: {chunks_used} chunks + Dynamic Guidance")
+                    else:
+                        st.caption(f"🔍 40% Dataset + Ground Truth Guidance")
+                        
+                    st.markdown("</div>", unsafe_allow_html=True)
         
         # Ranking interface
         st.markdown("### Your Ranking")
-        st.markdown("*Please rank the responses from 1 (best) to 4 (worst).*")
+        st.markdown(f"*Please rank the responses from 1 (best) to {len(response_labels)} (worst).*")
         
         with st.form("ranking_form"):
             # Create ranking sliders for each response
@@ -707,10 +774,10 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
                 rankings[label] = st.slider(
                     f"Rank Response {label}",
                     min_value=1, 
-                    max_value=4, 
+                    max_value=len(response_labels), 
                     value=i+1,
                     key=f"rank_{label}",
-                    help=f"1 = Best, 4 = Worst"
+                    help=f"1 = Best, {len(response_labels)} = Worst"
                 )
             
             confidence = st.slider(
@@ -728,10 +795,14 @@ def show_blind_evaluation_interface(validator: InputValidator, secure_logger: Se
             submitted = st.form_submit_button("Submit Ranking", type="primary")
             
             if submitted:
-                # Validate ranking (ensure all ranks are unique)
+                # Validate rankings (must be unique)
                 rank_values = list(rankings.values())
-                if len(set(rank_values)) != len(rank_values):
-                    st.error("❌ Please ensure each response has a unique rank (1-4).")
+                expected_ranks = list(range(1, len(response_labels) + 1))
+                
+                if len(set(rank_values)) != len(response_labels):
+                    st.error("⚠️ Please ensure each response has a unique ranking!")
+                elif sorted(rank_values) != expected_ranks:
+                    st.error(f"⚠️ Please use ranks 1 through {len(response_labels)} exactly once!")
                 else:
                     # Validate comment
                     comment_valid, comment_error = validator.validate_comment(comment)
@@ -970,16 +1041,13 @@ def analyze_provider_rankings(evaluations):
         
         # Map response labels to providers
         for label, rank in rankings.items():
-            if label in ['A', 'B', 'C', 'D']:
+            if label in response_order:
                 try:
-                    provider_index = ord(label) - ord('A')
-                    if provider_index < len(response_order):
-                        provider = response_order[provider_index]
-                        if provider not in provider_ranks:
-                            provider_ranks[provider] = []
-                            provider_counts[provider] = 0
-                        provider_ranks[provider].append(rank)
-                        provider_counts[provider] += 1
+                    label_index = response_order.index(label)
+                    if label_index < len(st.session_state.response_order):
+                        provider = st.session_state.response_order[label_index]
+                        provider_ranks[provider] = provider_ranks.get(provider, []) + [rank]
+                        provider_counts[provider] = provider_counts.get(provider, 0) + 1
                 except (IndexError, KeyError):
                     continue
     
